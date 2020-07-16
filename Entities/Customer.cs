@@ -22,9 +22,11 @@ namespace OK_OnBoarding.Entities
         public string State { get; set; }
         public string Country { get; set; }
         public string ProfilePicUrl { get; set; }
-        public DateTime DateOfBirth { get; set; }
-        public string PasswordHash { get; set; }
-        public string PasswordSalt { get; set; }
+        public DateTime? DateOfBirth { get; set; }
+        public byte[] PasswordHash { get; set; }
+        public byte[] PasswordSalt { get; set; }
+        public bool IsVerified { get; set; } = false;
+        public DateTime? LastLoginDate { get; set; }
 
 
         public ICollection<Cart> Carts { get; set; } //All the carts belonging to a Customer

@@ -16,8 +16,8 @@ namespace OK_OnBoarding.Entities
         public string LastName { get; set; }
         public string Email { get; set; }
         public string ProfilePicUrl { get; set; }
-        public string PasswordHash { get; set; }
-        public string PasswordSalt { get; set; }
+        public byte[] PasswordHash { get; set; }
+        public byte[] PasswordSalt { get; set; }
         public string PhoneNumber { get; set; }
         public DateTime LastLoginDate { get; set; }
         public bool IsAdmin { get; set; }

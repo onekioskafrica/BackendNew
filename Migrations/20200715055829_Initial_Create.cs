@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace OK_OnBoarding.Migrations
 {
-    public partial class InitialCreate : Migration
+    public partial class Initial_Create : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -30,7 +30,8 @@ namespace OK_OnBoarding.Migrations
                     LastName = table.Column<string>(nullable: true),
                     Email = table.Column<string>(nullable: true),
                     PhoneNumber = table.Column<string>(nullable: true),
-                    Password = table.Column<string>(nullable: true),
+                    PasswordHash = table.Column<byte[]>(nullable: true),
+                    PasswordSalt = table.Column<byte[]>(nullable: true),
                     DateCreated = table.Column<DateTime>(nullable: false),
                     LastLoginDate = table.Column<DateTime>(nullable: false),
                     Privileges = table.Column<string>(nullable: true),
@@ -115,9 +116,11 @@ namespace OK_OnBoarding.Migrations
                     State = table.Column<string>(nullable: true),
                     Country = table.Column<string>(nullable: true),
                     ProfilePicUrl = table.Column<string>(nullable: true),
-                    DateOfBirth = table.Column<DateTime>(nullable: false),
-                    PasswordHash = table.Column<string>(nullable: true),
-                    PasswordSalt = table.Column<string>(nullable: true)
+                    DateOfBirth = table.Column<DateTime>(nullable: true),
+                    PasswordHash = table.Column<byte[]>(nullable: true),
+                    PasswordSalt = table.Column<byte[]>(nullable: true),
+                    IsVerified = table.Column<bool>(nullable: false),
+                    LastLoginDate = table.Column<DateTime>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -167,8 +170,8 @@ namespace OK_OnBoarding.Migrations
                     DateOfBirth = table.Column<DateTime>(nullable: false),
                     EmailAddress = table.Column<string>(nullable: true),
                     ReferredBy = table.Column<string>(nullable: true),
-                    PasswordHash = table.Column<string>(nullable: true),
-                    PasswordSalt = table.Column<string>(nullable: true),
+                    PasswordHash = table.Column<byte[]>(nullable: true),
+                    PasswordSalt = table.Column<byte[]>(nullable: true),
                     IsOneKioskContractAccepted = table.Column<bool>(nullable: false),
                     DateCreated = table.Column<DateTime>(nullable: false),
                     IsActivated = table.Column<bool>(nullable: false)
@@ -189,8 +192,8 @@ namespace OK_OnBoarding.Migrations
                     LastName = table.Column<string>(nullable: true),
                     Email = table.Column<string>(nullable: true),
                     ProfilePicUrl = table.Column<string>(nullable: true),
-                    PasswordHash = table.Column<string>(nullable: true),
-                    PasswordSalt = table.Column<string>(nullable: true),
+                    PasswordHash = table.Column<byte[]>(nullable: true),
+                    PasswordSalt = table.Column<byte[]>(nullable: true),
                     PhoneNumber = table.Column<string>(nullable: true),
                     LastLoginDate = table.Column<DateTime>(nullable: false),
                     IsAdmin = table.Column<bool>(nullable: false)
@@ -510,14 +513,14 @@ namespace OK_OnBoarding.Migrations
                     SessionId = table.Column<string>(nullable: true),
                     Token = table.Column<string>(nullable: true),
                     Status = table.Column<string>(nullable: true),
-                    SubTotal = table.Column<decimal>(nullable: false),
-                    ItemDiscount = table.Column<decimal>(nullable: false),
-                    Tax = table.Column<decimal>(nullable: false),
-                    Shipping = table.Column<decimal>(nullable: false),
-                    Total = table.Column<decimal>(nullable: false),
+                    SubTotal = table.Column<decimal>(type: "decimal(18, 2)", nullable: false),
+                    ItemDiscount = table.Column<decimal>(type: "decimal(18, 2)", nullable: false),
+                    Tax = table.Column<decimal>(type: "decimal(18, 4)", nullable: false),
+                    Shipping = table.Column<decimal>(type: "decimal(18, 2)", nullable: false),
+                    Total = table.Column<decimal>(type: "decimal(18, 2)", nullable: false),
                     Promo = table.Column<string>(nullable: true),
-                    Discount = table.Column<decimal>(nullable: false),
-                    GrandTotal = table.Column<decimal>(nullable: false),
+                    Discount = table.Column<decimal>(type: "decimal(18, 2)", nullable: false),
+                    GrandTotal = table.Column<decimal>(type: "decimal(18, 2)", nullable: false),
                     FirstName = table.Column<string>(nullable: true),
                     MiddleName = table.Column<string>(nullable: true),
                     LastName = table.Column<string>(nullable: true),
@@ -746,8 +749,8 @@ namespace OK_OnBoarding.Migrations
                     ProductId = table.Column<Guid>(nullable: false),
                     CartId = table.Column<int>(nullable: false),
                     SKU = table.Column<string>(nullable: true),
-                    Price = table.Column<decimal>(nullable: false),
-                    Discount = table.Column<decimal>(nullable: false),
+                    Price = table.Column<decimal>(type: "decimal(18, 2)", nullable: false),
+                    Discount = table.Column<decimal>(type: "decimal(18, 2)", nullable: false),
                     Quantity = table.Column<int>(nullable: false),
                     IsActive = table.Column<bool>(nullable: false),
                     CreatedAt = table.Column<DateTime>(nullable: false),
@@ -817,9 +820,9 @@ namespace OK_OnBoarding.Migrations
                     ProductId = table.Column<Guid>(nullable: false),
                     SellerSku = table.Column<string>(nullable: true),
                     Variation = table.Column<string>(nullable: true),
-                    Quantity = table.Column<decimal>(nullable: false),
-                    Price = table.Column<decimal>(nullable: false),
-                    SalePrice = table.Column<decimal>(nullable: false),
+                    Quantity = table.Column<int>(nullable: false),
+                    Price = table.Column<decimal>(type: "decimal(18, 2)", nullable: false),
+                    SalePrice = table.Column<decimal>(type: "decimal(18, 2)", nullable: false),
                     SaleStartDate = table.Column<DateTime>(nullable: false),
                     SaleEndDate = table.Column<DateTime>(nullable: false)
                 },

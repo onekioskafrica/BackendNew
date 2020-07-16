@@ -20,13 +20,27 @@ namespace OK_OnBoarding.Entities
         public string SessionId { get; set; }
         public string Token { get; set; }
         public string Status { get; set; } // Can be New, Checkout, Paid, Failed, Shipped, Delivered, Returned, Completed
+
+        [Column(TypeName = "decimal(18, 2)")]
         public decimal SubTotal { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
         public decimal ItemDiscount { get; set; }
+
+        [Column(TypeName = "decimal(18, 4)")]
         public decimal Tax { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
         public decimal Shipping { get; set; } //The Shipping charges of the Order Items
+
+        [Column(TypeName = "decimal(18, 2)")]
         public decimal Total { get; set; } // The total price of the Order including tax and shipping. It excludes the Item Discount
         public string Promo { get; set; } // The promo code of the Order
+
+        [Column(TypeName = "decimal(18, 2)")]
         public decimal Discount { get; set; } // The total discount of the Order based on the promo code or store discount.
+
+        [Column(TypeName = "decimal(18, 2)")]
         public decimal GrandTotal { get; set; } // The grand total of the order to be paid by the buyer
         public string FirstName { get; set; }
         public string MiddleName { get; set; }

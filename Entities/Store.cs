@@ -23,8 +23,8 @@ namespace OK_OnBoarding.Entities
         public DateTime DateOfBirth { get; set; }
         public string EmailAddress { get; set; }
         public string ReferredBy { get; set; }
-        public string PasswordHash { get; set; }
-        public string PasswordSalt { get; set; }
+        public byte[] PasswordHash { get; set; }
+        public byte[] PasswordSalt { get; set; }
         public bool IsOneKioskContractAccepted { get; set; }
         public DateTime DateCreated { get; set; }
         public bool IsActivated { get; set; }

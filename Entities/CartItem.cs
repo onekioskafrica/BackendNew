@@ -19,7 +19,11 @@ namespace OK_OnBoarding.Entities
         [ForeignKey("Cart")]
         public int CartId { get; set; }
         public string SKU { get; set; } // The SKU of the product while purchasing it.
+
+        [Column(TypeName = "decimal(18, 2)")]
         public decimal Price { get; set; } // The Price of the product while purchasing it
+
+        [Column(TypeName = "decimal(18, 2)")]
         public decimal Discount { get; set; } // The Discount of the product while purchasing it
         public int Quantity { get; set; }
         public bool IsActive { get; set; } //To show if the item is active in the cart to prevent it from being added again

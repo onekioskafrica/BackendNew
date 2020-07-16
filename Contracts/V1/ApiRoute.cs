@@ -14,5 +14,12 @@ namespace OK_OnBoarding.Contracts
         {
             public const string Get = Base + "/admins/{id}";
         }
+
+        public static class Customer
+        {
+            public const string Signup = Base + "/customers/signup";
+            public const string Login = Base + "/customers/login";
+            public const string Get = Base + "/customers/{id}";
+        }
     }
 }
