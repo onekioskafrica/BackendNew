@@ -15,7 +15,8 @@ namespace OK_OnBoarding.Entities
         public string LastName { get; set; }
         public string Email { get; set; }
         public string PhoneNumber { get; set; }
-        public string Password { get; set; }
+        public byte[] PasswordHash { get; set; }
+        public byte[] PasswordSalt { get; set; }
         public DateTime DateCreated { get; set; }
         public DateTime LastLoginDate { get; set; }
         public string Privileges { get; set; }

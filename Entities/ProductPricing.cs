@@ -19,8 +19,12 @@ namespace OK_OnBoarding.Entities
         public Guid ProductId { get; set; }
         public string SellerSku { get; set; }
         public string Variation { get; set; }
-        public decimal Quantity { get; set; }
+        public int Quantity { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
         public decimal Price { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
         public decimal SalePrice { get; set; }
         public DateTime SaleStartDate { get; set; }
         public DateTime SaleEndDate { get; set; }
