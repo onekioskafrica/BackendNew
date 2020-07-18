@@ -74,12 +74,73 @@ namespace OK_OnBoarding.Services
 
         public async Task<AuthenticationResponse> GoogleLoginStoreOwnerAsync(GoogleAuthRequest request)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrWhiteSpace(request.FirstName) || string.IsNullOrWhiteSpace(request.LastName) || string.IsNullOrWhiteSpace(request.Email))
+                return new AuthenticationResponse { Errors = new[] { "FirstName, LastName and Email cannot be empty." } };
+            var storeOwnerExist = await _dataContext.StoreOwners.FirstOrDefaultAsync(s => s.EmailAddress == request.Email);
+            if(storeOwnerExist != null) // Sign Store Owner in
+            {
+                storeOwnerExist.LastLoginDate = DateTime.Now;
+                _dataContext.Entry(storeOwnerExist).State = EntityState.Modified;
+                var updated = await _dataContext.SaveChangesAsync();
+                if(updated <= 0)
+                    return new AuthenticationResponse { Errors = new[] { "Failed to signin." } };
+
+                var token = GenerateAuthenticationTokenForStoreOwner(storeOwnerExist);
+                return new AuthenticationResponse { Success = true, Token = token };
+            }
+            else // Register Store Owner
+            {
+                var newStoreOwner = new StoreOwner()
+                {
+                    EmailAddress = request.Email,
+                    FirstName = request.FirstName,
+                    MiddleName = request.MiddleName,
+                    LastName = request.LastName,
+                    PhoneNumber = request.PhoneNumber,
+                    ProfilePicUrl = request.ImageUrl,
+                    IsVerified = true,
+                    DateRegistered = DateTime.Now,
+                    IsGoogleRegistered = true
+                };
+                await _dataContext.StoreOwners.AddAsync(newStoreOwner);
+                var created = await _dataContext.SaveChangesAsync();
+                if(created <= 0)
+                    return new AuthenticationResponse { Errors = new[] { "Failed to register customer." } };
+
+                var token = GenerateAuthenticationTokenForStoreOwner(newStoreOwner);
+                return new AuthenticationResponse { Success = true, Token = token };
+            }
         }
 
         public async Task<AuthenticationResponse> LoginStoreOwnerAsync(string email, string password)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+                return new AuthenticationResponse { Errors = new[] { "Email/Password cannot be empty." } };
+
+            var storeOwner = await _dataContext.StoreOwners.SingleOrDefaultAsync(s => s.EmailAddress == email);
+            if(storeOwner == null)
+                return new AuthenticationResponse { Errors = new[] { "Store Owner does not exist." } };
+
+            bool isPasswordCorrect = false;
+            try
+            {
+                isPasswordCorrect = Security.VerifyPassword(password, storeOwner.PasswordHash, storeOwner.PasswordSalt);
+            }
+            catch (Exception)
+            {
+                return new AuthenticationResponse { Errors = new[] { "Error Occurred." } };
+            }
+            if(!isPasswordCorrect)
+                return new AuthenticationResponse { Errors = new[] { "Store Owner Email/Password is not correct." } };
+
+            storeOwner.LastLoginDate = DateTime.Now;
+            _dataContext.Entry(storeOwner).State = EntityState.Modified;
+            var updated = await _dataContext.SaveChangesAsync();
+            if(updated <= 0)
+                return new AuthenticationResponse { Errors = new[] { "Failed to signin." } };
+
+            var token = GenerateAuthenticationTokenForStoreOwner(storeOwner);
+            return new AuthenticationResponse { Success = true, Token = token };
         }
 
         private string GenerateAuthenticationTokenForStoreOwner(StoreOwner storeOwner)
