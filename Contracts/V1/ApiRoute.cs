@@ -23,5 +23,13 @@ namespace OK_OnBoarding.Contracts
             public const string FacebookAuth = Base + "/customers/auth/fbauth";
             public const string GoogleAuth = Base + "/customers/auth/googleauth";
         }
+
+        public static class StoreOwner
+        {
+            public const string Signup = Base + "/storeowners/signup";
+            public const string Login = Base + "/storeowners/login";
+            public const string FacebookAuth = Base + "/storeowners/auth/fbauth";
+            public const string GoogleAuth = Base + "/storeowners/auth/googleauth";
+        }
     }
 }

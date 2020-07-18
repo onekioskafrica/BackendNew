@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OK_OnBoarding.Data;
 
 namespace OK_OnBoarding.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20200718101326_Created_StoreOwner_Table")]
+    partial class Created_StoreOwner_Table
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1129,7 +1131,7 @@ namespace OK_OnBoarding.Migrations
 
                     b.HasIndex("FirstName", "LastName", "PhoneNumber", "DateOfBirth", "EmailAddress", "ReferredBy", "IsVerified", "IsFacebookRegistered", "IsGoogleRegistered");
 
-                    b.ToTable("StoreOwners");
+                    b.ToTable("StoreOwner");
                 });
 
             modelBuilder.Entity("OK_OnBoarding.Entities.StoreOwnerToken", b =>
