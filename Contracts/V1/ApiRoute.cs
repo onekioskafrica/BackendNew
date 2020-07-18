@@ -20,6 +20,8 @@ namespace OK_OnBoarding.Contracts
             public const string Signup = Base + "/customers/signup";
             public const string Login = Base + "/customers/login";
             public const string Get = Base + "/customers/{id}";
+            public const string FacebookAuth = Base + "/customers/auth/fbauth";
+            public const string GoogleAuth = Base + "/customers/auth/googleauth";
         }
     }
 }

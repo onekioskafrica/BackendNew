@@ -75,6 +75,7 @@ namespace OK_OnBoarding.Data
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Customer> Customers { get; set; }
+        public DbSet<CustomerToken> CustomerTokens { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<Privilege> Priviliges { get; set; }
         public DbSet<Product> Products { get; set; }
@@ -86,6 +87,7 @@ namespace OK_OnBoarding.Data
         public DbSet<Store> Stores { get; set; }
         public DbSet<StoresBankAccount> StoresBankAccounts { get; set; }
         public DbSet<StoresBusinessInformation> StoresBusinessInformation { get; set; }
+        public DbSet<StoreOwnerToken> StoreOwnerTokens { get; set; }
         public DbSet<SuperAdmin> SuperAdmin { get; set; }
         public DbSet<SuperAdminActions> SuperAdminActions { get; set; }
         public DbSet<SuperAdminActivityLog> SuperAdminActivityLogs { get; set; }
