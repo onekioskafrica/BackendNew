@@ -52,7 +52,9 @@ namespace OK_OnBoarding.Data
             builder.Entity<ProductReview>()
                 .HasIndex(p => new { p.Title, p.Rating, p.IsPublished, p.CreatedAt, p.PublishedAt });
             builder.Entity<Store>()
-                .HasIndex(s => new { s.StoreId, s.FirstName, s.LastName, s.PhoneNumber, s.StoreName, s.EmailAddress, s.ReferredBy, s.IsOneKioskContractAccepted, s.DateCreated, s.IsActivated });
+                .HasIndex(s => new { s.StoreOwnerId, s.StoreId, s.StoreName, s.DateCreated, s.IsActivated });
+            builder.Entity<StoreOwner>()
+                .HasIndex(s => new { s.FirstName, s.LastName, s.PhoneNumber, s.DateOfBirth, s.EmailAddress, s.ReferredBy, s.IsVerified, s.IsFacebookRegistered, s.IsGoogleRegistered });
             builder.Entity<StoresBankAccount>()
                .HasIndex(s => new { s.StoreId, s.BankCode, s.AccountNumber, s.BvnNumber });
             builder.Entity<StoresBusinessInformation>()
@@ -85,9 +87,10 @@ namespace OK_OnBoarding.Data
         public DbSet<ProductReview> ProductReviews { get; set; }
         public DbSet<ProductType> ProductTypes { get; set; }
         public DbSet<Store> Stores { get; set; }
+        public DbSet<StoreOwner> StoreOwners { get; set; }
+        public DbSet<StoreOwnerToken> StoreOwnerTokens { get; set; }
         public DbSet<StoresBankAccount> StoresBankAccounts { get; set; }
         public DbSet<StoresBusinessInformation> StoresBusinessInformation { get; set; }
-        public DbSet<StoreOwnerToken> StoreOwnerTokens { get; set; }
         public DbSet<SuperAdmin> SuperAdmin { get; set; }
         public DbSet<SuperAdminActions> SuperAdminActions { get; set; }
         public DbSet<SuperAdminActivityLog> SuperAdminActivityLogs { get; set; }

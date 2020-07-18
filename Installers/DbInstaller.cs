@@ -18,6 +18,7 @@ namespace OK_OnBoarding.Installers
                 options.UseSqlServer(
                     configuration.GetConnectionString("DefaultConnection")));
             services.AddScoped<ICustomersService, CustomersService>();
+            services.AddScoped<IStoreOwnerService, StoreOwnerService>();
         }
     }
 }
