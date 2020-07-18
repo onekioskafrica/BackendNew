@@ -5,6 +5,7 @@ using OK_OnBoarding.Contracts;
 using OK_OnBoarding.Contracts.V1.Requests;
 using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Entities;
+using OK_OnBoarding.ExternalContract;
 using OK_OnBoarding.Services;
 using System;
 using System.Collections.Generic;
@@ -44,6 +45,41 @@ namespace OK_OnBoarding.Controllers.V1
             {
                 return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
             }
+            return Ok(new AuthSuccessResponse { Token = authResponse.Token });
+        }
+
+        [AllowAnonymous]
+        [HttpPost(ApiRoute.StoreOwner.Login)]
+        public async Task<IActionResult> Login([FromBody] StoreOwnerLoginRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+            var authResponse = await _storeOwnerService.LoginStoreOwnerAsync(request.Email, request.Password);
+            if(!authResponse.Success)
+                return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
+
+            return Ok(new AuthSuccessResponse { Token = authResponse.Token });
+        }
+
+        [AllowAnonymous]
+        [HttpPost(ApiRoute.StoreOwner.GoogleAuth)]
+        public async Task<IActionResult> GoogleAuth([FromBody] GoogleAuthRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+            var authResponse = await _storeOwnerService.GoogleLoginStoreOwnerAsync(request);
+            if(!authResponse.Success)
+                return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
             return Ok(new AuthSuccessResponse { Token = authResponse.Token });
         }
     }
