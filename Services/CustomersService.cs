@@ -6,6 +6,7 @@ using OK_OnBoarding.Contracts.V1;
 using OK_OnBoarding.Data;
 using OK_OnBoarding.Domains;
 using OK_OnBoarding.Entities;
+using OK_OnBoarding.ExternalContract;
 using OK_OnBoarding.Helpers;
 using System;
 using System.Collections.Generic;
@@ -22,25 +23,69 @@ namespace OK_OnBoarding.Services
     {
         private readonly DataContext _dataContext;
         private readonly JwtSettings _jwtSettings;
+        private readonly IFacebookAuthService _facebookAuthService;
 
-        public CustomersService(DataContext dataContext, JwtSettings jwtSettings)
+        public CustomersService(DataContext dataContext, JwtSettings jwtSettings, IFacebookAuthService facebookAuthService)
         {
             _dataContext = dataContext;
             _jwtSettings = jwtSettings;
+            _facebookAuthService = facebookAuthService;
+        }
+
+        public async Task<AuthenticationResponse> GoogleLoginCustomerAsync(GoogleAuthRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.FirstName) || string.IsNullOrWhiteSpace(request.LastName) || string.IsNullOrWhiteSpace(request.Email))
+                return new AuthenticationResponse { Errors = new[] { "FirstName, LastName and Email cannot be empty." } };
+            var customerExist = await _dataContext.Customers.FirstOrDefaultAsync(c => c.Email == request.Email);
+            if(customerExist != null) //Sign Customer in
+            {
+                customerExist.LastLoginDate = DateTime.Now;
+                _dataContext.Entry(customerExist).State = EntityState.Modified;
+                var updated = await _dataContext.SaveChangesAsync();
+                if (updated <= 0)
+                    return new AuthenticationResponse { Errors = new[] { "Failed to signin." } };
+
+                var token = GenerateAuthenticationTokenForCustomer(customerExist);
+                return new AuthenticationResponse { Success = true, Token = token };
+            }
+            else // Register Customer
+            {
+                var newCustomer = new Customer()
+                {
+                    Email = request.Email,
+                    FirstName = request.FirstName,
+                    MiddleName = request.MiddleName,
+                    LastName = request.LastName,
+                    PhoneNumber = request.PhoneNumber,
+                    ProfilePicUrl = request.ImageUrl,
+                    IsVerified = true,
+                    DateRegistered = DateTime.Now,
+                    IsGoogleRegistered = true
+                };
+                await _dataContext.Customers.AddAsync(newCustomer);
+                var created = await _dataContext.SaveChangesAsync();
+                if (created <= 0)
+                    return new AuthenticationResponse { Errors = new[] { "Failed to register customer." } };
+
+                var token = GenerateAuthenticationTokenForCustomer(newCustomer);
+                return new AuthenticationResponse { Success = true, Token = token };
+            }
         }
 
         public async Task<AuthenticationResponse> CreateCustomerAsync(Customer customer, string password)
         {
-            if (string.IsNullOrEmpty(customer.FirstName) || string.IsNullOrEmpty(customer.LastName) || string.IsNullOrEmpty(customer.Email))
+            if (string.IsNullOrWhiteSpace(customer.FirstName) || string.IsNullOrWhiteSpace(customer.LastName) || string.IsNullOrWhiteSpace(customer.Email))
                 return new AuthenticationResponse { Errors = new[] { "FirstName, LastName and Email cannot be empty" } };
             var customerExist = await _dataContext.Customers.FirstOrDefaultAsync(c => c.Email == customer.Email || c.PhoneNumber == customer.PhoneNumber);
 
             if (customerExist != null)
+            {
+                if (!customerExist.IsVerified)
+                 return new AuthenticationResponse { Errors = new[] { "Customer already exist but not verified." } };
+
                 return new AuthenticationResponse { Errors = new[] { "Customer with this email and phonenumber already exists." } };
-
-
-            /*if (!customerExist.Verified)
-                return new AuthenticationResponse { Errors = new[] { "Customer already exist but not verified." } };*/
+            }
+             
 
             byte[] passwordHash, passwordSalt;
             try
@@ -52,8 +97,9 @@ namespace OK_OnBoarding.Services
  
             customer.PasswordHash = passwordHash;
             customer.PasswordSalt = passwordSalt;
+            customer.DateRegistered = DateTime.Now;
 
-            _dataContext.Customers.Add(customer);
+            await _dataContext.Customers.AddAsync(customer);
             var created = await _dataContext.SaveChangesAsync();
             if(created <= 0)
             {
@@ -65,9 +111,66 @@ namespace OK_OnBoarding.Services
             return new AuthenticationResponse { Success = true, Token = token };
         }
 
+        public async Task<AuthenticationResponse> FacebookLoginCustomerAsync(string accessToken)
+        {
+            if (string.IsNullOrWhiteSpace(accessToken))
+                return new AuthenticationResponse { Errors = new[] { "AccessToken cannot be empty." } };
+
+            var validateTokenResult = await _facebookAuthService.ValidateAccessTokenAsync(accessToken);
+            if(validateTokenResult.Data != null)
+            {
+                if (!validateTokenResult.Data.IsValid)
+                    return new AuthenticationResponse { Errors = new[] { "Invalid Facebook Token." } };
+
+                var fbUserInfo = await _facebookAuthService.GetUserInfoAsync(accessToken);
+                if (fbUserInfo.Id == "Failed")
+                    return new AuthenticationResponse { Errors = new[] { "Failed to Get Facebook User. " } };
+
+                var customerExist = await _dataContext.Customers.FirstOrDefaultAsync(c => c.Email == fbUserInfo.Email);
+                if(customerExist == null) //Register Customer
+                {
+                    var newCustomer = new Customer() {
+                        Email = fbUserInfo.Email,
+                        FirstName = fbUserInfo.FirstName,
+                        MiddleName = fbUserInfo.MiddleName,
+                        LastName = fbUserInfo.LastName,
+                        PhoneNumber = string.Empty,
+                        ProfilePicUrl = fbUserInfo.Picture.FacebookPictureData.Url.ToString(),
+                        IsVerified = true,
+                        DateRegistered = DateTime.Now,
+                        IsFacebookRegistered = true
+                    };
+                    await _dataContext.Customers.AddAsync(newCustomer);
+                    var created = await _dataContext.SaveChangesAsync();
+                    if (created <= 0)
+                        return new AuthenticationResponse { Errors = new[] { "Failed to create customer" } };
+
+                    var token = GenerateAuthenticationTokenForCustomer(newCustomer);
+
+                    return new AuthenticationResponse { Success = true, Token = token };
+                }
+                else //Signin Customer
+                {
+                    customerExist.LastLoginDate = DateTime.Now;
+                    _dataContext.Entry(customerExist).State = EntityState.Modified;
+                    var updated = await _dataContext.SaveChangesAsync();
+                    if (updated <= 0)
+                        return new AuthenticationResponse { Errors = new[] { "Failed to signin." } };
+
+                    var token = GenerateAuthenticationTokenForCustomer(customerExist);
+                    return new AuthenticationResponse { Success = true, Token = token };
+                }
+            }
+            else
+            {
+                return new AuthenticationResponse { Errors = new[] { "Failed to Validate Facebook." } };
+            }
+
+        }
+
         public async Task<AuthenticationResponse> LoginCustomerAsync(string email, string password)
         {
-            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
                 return new AuthenticationResponse { Errors = new[] { "Email/Password cannot be empty." } };
 
             var customer = await _dataContext.Customers.SingleOrDefaultAsync(c => c.Email == email);
@@ -89,8 +192,10 @@ namespace OK_OnBoarding.Services
 
             customer.LastLoginDate = DateTime.Now;
             _dataContext.Entry(customer).State = EntityState.Modified;
-            await _dataContext.SaveChangesAsync();
-            
+            var updated = await _dataContext.SaveChangesAsync();
+            if (updated <= 0)
+                return new AuthenticationResponse { Errors = new[] { "Failed to signin." } };
+
             var token = GenerateAuthenticationTokenForCustomer(customer);
             return new AuthenticationResponse { Success = true, Token = token };
         }

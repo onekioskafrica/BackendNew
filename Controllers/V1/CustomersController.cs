@@ -6,6 +6,7 @@ using OK_OnBoarding.Contracts.V1;
 using OK_OnBoarding.Contracts.V1.Requests;
 using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Entities;
+using OK_OnBoarding.ExternalContract;
 using OK_OnBoarding.Services;
 using System;
 using System.Collections.Generic;
@@ -52,11 +53,45 @@ namespace OK_OnBoarding.Controllers.V1
         [HttpPost(ApiRoute.Customer.Login)]
         public async Task<IActionResult> Login([FromBody] CustomerLoginRequest request)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
             var authResponse = await _customersService.LoginCustomerAsync(request.Email, request.Password);
             if (!authResponse.Success)
             {
                 return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
             }
+            return Ok(new AuthSuccessResponse { Token = authResponse.Token });
+        }
+
+        [AllowAnonymous]
+        [HttpPost(ApiRoute.Customer.FacebookAuth)]
+        public async Task<IActionResult> FacebookAuth([FromBody] FacebookAuthRequest request)
+        {
+            var authResponse = await _customersService.FacebookLoginCustomerAsync(request.AccessToken);
+            if (!authResponse.Success)
+                return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
+            return Ok(new AuthSuccessResponse { Token = authResponse.Token });
+        }
+
+        [AllowAnonymous]
+        [HttpPost(ApiRoute.Customer.GoogleAuth)]
+        public async Task<IActionResult> GoogleAuth([FromBody] GoogleAuthRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+            var authResponse = await _customersService.GoogleLoginCustomerAsync(request);
+            if (!authResponse.Success)
+                return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
             return Ok(new AuthSuccessResponse { Token = authResponse.Token });
         }
     }

@@ -26,7 +26,10 @@ namespace OK_OnBoarding.Entities
         public byte[] PasswordHash { get; set; }
         public byte[] PasswordSalt { get; set; }
         public bool IsVerified { get; set; } = false;
+        public bool IsFacebookRegistered { get; set; } = false;
+        public bool IsGoogleRegistered { get; set; } = false;
         public DateTime? LastLoginDate { get; set; }
+        public DateTime? DateRegistered { get; set; }
 
 
         public ICollection<Cart> Carts { get; set; } //All the carts belonging to a Customer
