@@ -63,6 +63,8 @@ namespace OK_OnBoarding.Data
                 .HasIndex(s => new { s.AdminId, s.ActionCarriedOutId, s.StoreId, s.DateOfAction });
             builder.Entity<Transactions>()
                 .HasIndex(t => new { t.Code, t.Type, t.Mode, t.Status, t.CreatedAt });
+            builder.Entity<WishList>()
+                .HasIndex(w => w.CreatedAt );
             
         }
 
@@ -98,6 +100,7 @@ namespace OK_OnBoarding.Data
         public DbSet<SuperAdminSelfEditHistory> SuperAdminSelfEditHistories { get; set; }
         public DbSet<Transactions> Transactions { get; set; }
         public DbSet<WarrantyTypes> WarrantyTypes { get; set; }
-
+        public DbSet<WishList> WishLists { get; set; }
+        public DbSet<WishListItem> WishListItems { get; set; }
     }
 }

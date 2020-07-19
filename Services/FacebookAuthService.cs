@@ -33,7 +33,7 @@ namespace OK_OnBoarding.Services
             {
                 result.EnsureSuccessStatusCode();
             }
-            catch (HttpRequestException ex)
+            catch (HttpRequestException)
             {
                 return new FacebookUserInfoResult() { Id = "Failed" };
             }
@@ -50,7 +50,7 @@ namespace OK_OnBoarding.Services
             {
                 result.EnsureSuccessStatusCode();
             }
-            catch(HttpRequestException ex)
+            catch(HttpRequestException)
             {
                 return new FacebookTokenValidationResult() { Data = null };
             }

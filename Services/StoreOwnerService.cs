@@ -48,7 +48,7 @@ namespace OK_OnBoarding.Services
             {
                 Security.CreatePasswordHash(password, out passwordHash, out passwordSalt);
             }
-            catch(Exception ex)
+            catch(Exception)
             {
                 return new AuthenticationResponse { Errors = new[] { "Error Occurred." } };
             }
@@ -69,7 +69,58 @@ namespace OK_OnBoarding.Services
 
         public async Task<AuthenticationResponse> FacebookLoginStoreOwnerAsync(string accessToken)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrWhiteSpace(accessToken))
+                return new AuthenticationResponse { Errors = new[] { "AccessToken cannot be empty." } };
+
+            var validateTokenResult = await _facebookAuthService.ValidateAccessTokenAsync(accessToken);
+            if(validateTokenResult.Data != null)
+            {
+                if (!validateTokenResult.Data.IsValid)
+                    return new AuthenticationResponse { Errors = new[] { "Invalid Facebook Token." } };
+
+                var fbUserInfo = await _facebookAuthService.GetUserInfoAsync(accessToken);
+                if (fbUserInfo.Id == "Failed")
+                    return new AuthenticationResponse { Errors = new[] { "Failed to Get Facebook User. " } };
+
+                var storeOwnerExist = await _dataContext.StoreOwners.FirstOrDefaultAsync(s => s.EmailAddress == fbUserInfo.Email);
+                if(storeOwnerExist == null) //Register StoreOwner
+                {
+                    var newStoreOwner = new StoreOwner()
+                    {
+                        EmailAddress = fbUserInfo.Email,
+                        FirstName = fbUserInfo.FirstName,
+                        MiddleName = fbUserInfo.MiddleName,
+                        LastName = fbUserInfo.LastName,
+                        PhoneNumber = string.Empty,
+                        ProfilePicUrl = fbUserInfo.Picture.FacebookPictureData.Url.ToString(),
+                        IsVerified = true,
+                        DateRegistered = DateTime.Now,
+                        IsFacebookRegistered = true
+                    };
+                    await _dataContext.StoreOwners.AddAsync(newStoreOwner);
+                    var created = await _dataContext.SaveChangesAsync();
+                    if(created <= 0)
+                        return new AuthenticationResponse { Errors = new[] { "Failed to create customer" } };
+
+                    var token = GenerateAuthenticationTokenForStoreOwner(newStoreOwner);
+                    return new AuthenticationResponse { Success = true, Token = token };
+                }
+                else //Signin StoreOwner
+                {
+                    storeOwnerExist.LastLoginDate = DateTime.Now;
+                    _dataContext.Entry(storeOwnerExist).State = EntityState.Modified;
+                    var updated = await _dataContext.SaveChangesAsync();
+                    if(updated <= 0)
+                        return new AuthenticationResponse { Errors = new[] { "Failed to signin." } };
+
+                    var token = GenerateAuthenticationTokenForStoreOwner(storeOwnerExist);
+                    return new AuthenticationResponse { Success = true, Token = token };
+                }
+            }
+            else
+            {
+                return new AuthenticationResponse { Errors = new[] { "Failed to Validate Facebook." } };
+            }
         }
 
         public async Task<AuthenticationResponse> GoogleLoginStoreOwnerAsync(GoogleAuthRequest request)
