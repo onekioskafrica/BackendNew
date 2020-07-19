@@ -91,7 +91,7 @@ namespace OK_OnBoarding.Services
             try
             {
                 Security.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-            }catch(Exception ex){
+            }catch(Exception){
                 return new AuthenticationResponse { Errors = new[] { "Error Occurred." } };
             }
  

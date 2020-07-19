@@ -27,8 +27,8 @@ namespace OK_OnBoarding.Entities
         public decimal Discount { get; set; } // The Discount of the product while purchasing it
         public int Quantity { get; set; }
         public bool IsActive { get; set; } //To show if the item is active in the cart to prevent it from being added again
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
+        public DateTime? CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
 
 
         public Cart Cart { get; set; } //The Cart this CartItem belongs to
