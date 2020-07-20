@@ -70,7 +70,59 @@ namespace OK_OnBoarding.Services
 
         public async Task<AuthenticationResponse> FacebookLoginDeliverymanAsync(string accessToken)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrWhiteSpace(accessToken))
+                return new AuthenticationResponse { Errors = new[] { "AccessToken cannot be empty." } };
+
+            var validateTokenResult = await _facebookAuthService.ValidateAccessTokenAsync(accessToken);
+            if(validateTokenResult.Data != null)
+            {
+                if(!validateTokenResult.Data.IsValid)
+                    return new AuthenticationResponse { Errors = new[] { "Invalid Facebook Token." } };
+
+                var fbUserInfo = await _facebookAuthService.GetUserInfoAsync(accessToken);
+                if(fbUserInfo.Id == "Failed")
+                    return new AuthenticationResponse { Errors = new[] { "Failed to Get Facebook User. " } };
+
+
+                var deliverymanExist = await _dataContext.DeliveryMen.FirstOrDefaultAsync(d => d.Email == fbUserInfo.Email);
+                if(deliverymanExist == null) //Register Deliveryman
+                {
+                    var newDeliveryman = new Deliveryman()
+                    {
+                        Email = fbUserInfo.Email,
+                        FirstName = fbUserInfo.FirstName,
+                        MiddleName = fbUserInfo.MiddleName,
+                        LastName = fbUserInfo.LastName,
+                        PhoneNumber = string.Empty,
+                        ProfilePicUrl = fbUserInfo.Picture.FacebookPictureData.Url.ToString(),
+                        IsVerified = true,
+                        DateRegistered = DateTime.Now,
+                        IsGoogleRegistered = true
+                    };
+                    await _dataContext.DeliveryMen.AddAsync(newDeliveryman);
+                    var created = await _dataContext.SaveChangesAsync();
+                    if(created <= 0)
+                        return new AuthenticationResponse { Errors = new[] { "Failed to create deliveryman" } };
+
+                    var token = GenerateAuthenticationTokenForDeliveryman(newDeliveryman);
+                    return new AuthenticationResponse { Success = true, Token = token };
+                }
+                else //Signin Customer
+                {
+                    deliverymanExist.LastLoginDate = DateTime.Now;
+                    _dataContext.Entry(deliverymanExist).State = EntityState.Modified;
+                    var updated = await _dataContext.SaveChangesAsync();
+                    if(updated <= 0)
+                        return new AuthenticationResponse { Errors = new[] { "Failed to signin." } };
+
+                    var token = GenerateAuthenticationTokenForDeliveryman(deliverymanExist);
+                    return new AuthenticationResponse { Success = true, Token = token };
+                }
+            }
+            else
+            {
+                return new AuthenticationResponse { Errors = new[] { "Failed to Validate Facebook." } };
+            }
         }
 
         public async Task<AuthenticationResponse> GoogleLoginDeliverymanAsync(GoogleAuthRequest request)

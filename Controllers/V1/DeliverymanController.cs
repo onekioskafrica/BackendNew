@@ -81,5 +81,15 @@ namespace OK_OnBoarding.Controllers.V1
                 return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
             return Ok(new AuthSuccessResponse { Token = authResponse.Token });
         }
+
+        [AllowAnonymous]
+        [HttpPost(ApiRoute.Deliveryman.FacebookAuth)]
+        public async Task<IActionResult> FacebookAuth([FromBody] FacebookAuthRequest request)
+        {
+            var authResponse = await _delivermanService.FacebookLoginDeliverymanAsync(request.AccessToken);
+            if (!authResponse.Success)
+                return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
+            return Ok(new AuthSuccessResponse { Token = authResponse.Token });
+        }
     }
 }
