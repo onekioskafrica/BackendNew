@@ -5,6 +5,7 @@ using OK_OnBoarding.Contracts;
 using OK_OnBoarding.Contracts.V1.Requests;
 using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Entities;
+using OK_OnBoarding.ExternalContract;
 using OK_OnBoarding.Services;
 using System;
 using System.Collections.Generic;
@@ -40,6 +41,42 @@ namespace OK_OnBoarding.Controllers.V1
 
             var authResponse = await _delivermanService.CreateDeliverymanAsync(deliveryMan, model.Password);
 
+            if(!authResponse.Success)
+                return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
+            return Ok(new AuthSuccessResponse { Token = authResponse.Token });
+        }
+
+        [AllowAnonymous]
+        [HttpPost(ApiRoute.Deliveryman.Login)]
+        public async Task<IActionResult> Login([FromBody] DeliverymanLoginRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+            var authResponse = await _delivermanService.LoginDeliverymanAsync(request.Email, request.Password);
+            if (!authResponse.Success)
+            {
+                return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
+            }
+            return Ok(new AuthSuccessResponse { Token = authResponse.Token });
+        }
+
+        [AllowAnonymous]
+        [HttpPost(ApiRoute.Deliveryman.GoogleAuth)]
+        public async Task<IActionResult> GoogleAuth([FromBody] GoogleAuthRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+            var authResponse = await _delivermanService.GoogleLoginDeliverymanAsync(request);
             if(!authResponse.Success)
                 return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
             return Ok(new AuthSuccessResponse { Token = authResponse.Token });

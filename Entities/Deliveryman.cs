@@ -15,6 +15,7 @@ namespace OK_OnBoarding.Entities
         public string Email { get; set; }
         public string PhoneNumber { get; set; }
         public string Gender { get; set; }
+        public string ProfilePicUrl { get; set; }
         public byte[] PasswordHash { get; set; }
         public byte[] PasswordSalt { get; set; }
         public DateTime? DateOfBirth { get; set; }

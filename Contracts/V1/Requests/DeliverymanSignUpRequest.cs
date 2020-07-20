@@ -50,7 +50,6 @@ namespace OK_OnBoarding.Contracts.V1.Requests
         [JsonPropertyName("confirm_password")]
         public string ConfirmPassword { get; set; }
 
-        [Required]
         [DataType(DataType.EmailAddress)]
         [JsonPropertyName("referral_email")]
         public string ReferredBy { get; set; }

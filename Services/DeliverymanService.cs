@@ -75,12 +75,75 @@ namespace OK_OnBoarding.Services
 
         public async Task<AuthenticationResponse> GoogleLoginDeliverymanAsync(GoogleAuthRequest request)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrWhiteSpace(request.FirstName) || string.IsNullOrWhiteSpace(request.LastName) || string.IsNullOrWhiteSpace(request.Email))
+                return new AuthenticationResponse { Errors = new[] { "FirstName, LastName and Email cannot be empty." } };
+            var deliverymanExist = await _dataContext.DeliveryMen.FirstOrDefaultAsync(d => d.Email == request.Email);
+            if(deliverymanExist != null) //Sign Deliveryman in
+            {
+                deliverymanExist.LastLoginDate = DateTime.Now;
+                _dataContext.Entry(deliverymanExist).State = EntityState.Modified;
+                var updated = await _dataContext.SaveChangesAsync();
+                if(updated <= 0)
+                    return new AuthenticationResponse { Errors = new[] { "Failed to signin." } };
+
+                var token = GenerateAuthenticationTokenForDeliveryman(deliverymanExist);
+                return new AuthenticationResponse { Success = true, Token = token };
+            }
+            else // Register Deliveryman
+            {
+                var newDeliveryman = new Deliveryman()
+                {
+                    Email = request.Email,
+                    FirstName = request.FirstName,
+                    MiddleName = request.MiddleName,
+                    LastName = request.LastName,
+                    PhoneNumber = request.PhoneNumber,
+                    ProfilePicUrl = request.ImageUrl,
+                    IsVerified = true,
+                    DateRegistered = DateTime.Now,
+                    IsGoogleRegistered = true
+                };
+                await _dataContext.DeliveryMen.AddAsync(newDeliveryman);
+                var created = await _dataContext.SaveChangesAsync();
+                if(created <= 0)
+                    return new AuthenticationResponse { Errors = new[] { "Failed to register deliveryman." } };
+
+                var token = GenerateAuthenticationTokenForDeliveryman(newDeliveryman);
+                return new AuthenticationResponse { Success = true, Token = token };
+            }
+
         }
 
         public async Task<AuthenticationResponse> LoginDeliverymanAsync(string email, string password)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+                return new AuthenticationResponse { Errors = new[] { "Email/Password cannot be empty." } };
+
+            var deliveryman = await _dataContext.DeliveryMen.SingleOrDefaultAsync(d => d.Email == email);
+
+            if (deliveryman == null)
+                return new AuthenticationResponse { Errors = new[] { "Deliveryman does not exist." } };
+
+            bool isPasswordCorrect = false;
+            try
+            {
+                isPasswordCorrect = Security.VerifyPassword(password, deliveryman.PasswordHash, deliveryman.PasswordSalt);
+            }
+            catch (Exception)
+            {
+                return new AuthenticationResponse { Errors = new[] { "Error Occurred." } };
+            }
+            if(!isPasswordCorrect)
+                return new AuthenticationResponse { Errors = new[] { "Deliveryman Email/Password is not correct." } };
+
+            deliveryman.LastLoginDate = DateTime.Now;
+            _dataContext.Entry(deliveryman).State = EntityState.Modified;
+            var updated = await _dataContext.SaveChangesAsync();
+            if(updated <= 0)
+                return new AuthenticationResponse { Errors = new[] { "Failed to signin." } };
+
+            var token = GenerateAuthenticationTokenForDeliveryman(deliveryman);
+            return new AuthenticationResponse { Success = true, Token = token };
         }
 
         private string GenerateAuthenticationTokenForDeliveryman(Deliveryman deliveryman)
