@@ -14,12 +14,16 @@ namespace OK_OnBoarding.Entities
         public string LastName { get; set; }
         public string Email { get; set; }
         public string PhoneNumber { get; set; }
+        public string Gender { get; set; }
+        public byte[] PasswordHash { get; set; }
+        public byte[] PasswordSalt { get; set; }
+        public DateTime? DateOfBirth { get; set; }
         public string Line1 { get; set; }
         public string Line2 { get; set; }
         public string City { get; set; }
         public string State { get; set; }
         public string Country { get; set; }
-        public bool IsVerfied { get; set; } = false;
+        public bool IsVerified { get; set; } = false;
         public bool IsEnabled { get; set; } = false;
         public bool IsActive { get; set; } = false;
         public bool IsGoogleRegistered { get; set; } = false;

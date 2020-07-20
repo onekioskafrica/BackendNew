@@ -15,6 +15,7 @@ namespace OK_OnBoarding.Helpers
         {
             CreateMap<CustomerSignupRequest, Customer>();
             CreateMap<StoreOwnerSignUpRequest, StoreOwner>();
+            CreateMap<DeliverymanSignUpRequest, Deliveryman>();
         }
     }
 }

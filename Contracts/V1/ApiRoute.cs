@@ -31,5 +31,13 @@ namespace OK_OnBoarding.Contracts
             public const string FacebookAuth = Base + "/storeowners/auth/fbauth";
             public const string GoogleAuth = Base + "/storeowners/auth/googleauth";
         }
+
+        public static class Deliveryman
+        {
+            public const string Signup = Base + "/deliverymen/signup";
+            public const string Login = Base + "/deliverymen/login";
+            public const string FacebookAuth = Base + "/deliverymen/auth/fbauth";
+            public const string GoogleAuth = Base + "/deliverymen/auth/googleauth";
+        }
     }
 }

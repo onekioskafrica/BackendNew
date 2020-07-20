@@ -19,6 +19,7 @@ namespace OK_OnBoarding.Installers
                     configuration.GetConnectionString("DefaultConnection")));
             services.AddScoped<ICustomersService, CustomersService>();
             services.AddScoped<IStoreOwnerService, StoreOwnerService>();
+            services.AddScoped<IDelivermanService, DeliverymanService>();
         }
     }
 }

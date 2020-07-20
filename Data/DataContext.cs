@@ -39,6 +39,8 @@ namespace OK_OnBoarding.Data
                 .HasIndex(c => new { c.ParentId, c.Title });
             builder.Entity<Customer>()
                 .HasIndex(c => new { c.FirstName, c.LastName, c.Email, c.PhoneNumber });
+            builder.Entity<Deliveryman>()
+                .HasIndex(d => new { d.RiderId, d.FirstName, d.LastName, d.Email, d.PhoneNumber, d.DateOfBirth, d.State, d.IsVerified, d.IsEnabled, d.IsActive });
             builder.Entity<Order>()
                 .HasIndex(o => new { o.Status, o.SubTotal, o.ItemDiscount, o.Tax, o.Shipping, o.Total, o.Promo, o.Discount, o.GrandTotal, o.FirstName, o.LastName, o.Mobile, o.Email, o.City, o.State, o.CreatedAt });
             builder.Entity<Product>()
@@ -80,6 +82,8 @@ namespace OK_OnBoarding.Data
         public DbSet<Category> Categories { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<CustomerToken> CustomerTokens { get; set; }
+        public DbSet<Deliveryman> DeliveryMen { get; set; }
+        public DbSet<DeliverymanToken> DeliverymenTokens { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<Privilege> Priviliges { get; set; }
         public DbSet<Product> Products { get; set; }
