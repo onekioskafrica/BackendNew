@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using OK_OnBoarding.Helpers;
+using OK_OnBoarding.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,14 @@ namespace OK_OnBoarding.Installers
             var jwtSettings = new JwtSettings();
             configuration.Bind(nameof(jwtSettings), jwtSettings);
             services.AddSingleton(jwtSettings);
+
+            var appSettings = new AppSettings();
+            configuration.Bind(nameof(appSettings), appSettings);
+            services.AddSingleton(appSettings);
+
+            var termiiAuthSettings = new TermiiAuthSettings();
+            configuration.Bind(nameof(termiiAuthSettings), termiiAuthSettings);
+            services.AddSingleton(termiiAuthSettings);
 
             services.AddControllersWithViews();
 

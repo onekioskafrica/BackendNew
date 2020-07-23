@@ -8,5 +8,6 @@ namespace OK_OnBoarding.Contracts.V1.Responses
     public class AuthSuccessResponse
     {
         public string Token { get; set; }
+        public object Data { get; set; }
     }
 }

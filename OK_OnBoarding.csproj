@@ -9,6 +9,8 @@
     <Compile Remove="Migrations\20200718065246_Created_Token_Tables.Designer.cs" />
     <Compile Remove="Migrations\20200718065721_Created_Token_Tables.cs" />
     <Compile Remove="Migrations\20200718065721_Created_Token_Tables.Designer.cs" />
+    <Compile Remove="Migrations\20200723204435_Changed_Id_In_Customers.cs" />
+    <Compile Remove="Migrations\20200723204435_Changed_Id_In_Customers.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,6 +28,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="RestSharp" Version="106.11.4" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="5.5.1" />
   </ItemGroup>
 

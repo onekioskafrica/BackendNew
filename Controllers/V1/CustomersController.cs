@@ -20,10 +20,12 @@ namespace OK_OnBoarding.Controllers.V1
     {
         private readonly IMapper _mapper;
         private readonly ICustomersService _customersService;
+        private readonly IOTPService _otpService;
 
-        public CustomersController(IMapper mapper, ICustomersService customersService) {
+        public CustomersController(IMapper mapper, ICustomersService customersService, IOTPService otpService) {
             _mapper = mapper;
             _customersService = customersService;
+            _otpService = otpService;
         }
 
         [AllowAnonymous]
@@ -45,7 +47,7 @@ namespace OK_OnBoarding.Controllers.V1
             {
                 return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
             }
-            return Ok(new AuthSuccessResponse { Token = authResponse.Token });
+            return Ok(new AuthSuccessResponse { Token = authResponse.Token, Data = authResponse.Data });
 
         }
 
@@ -65,7 +67,7 @@ namespace OK_OnBoarding.Controllers.V1
             {
                 return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
             }
-            return Ok(new AuthSuccessResponse { Token = authResponse.Token });
+            return Ok(new AuthSuccessResponse { Token = authResponse.Token, Data = authResponse.Data });
         }
 
         [AllowAnonymous]
@@ -75,7 +77,7 @@ namespace OK_OnBoarding.Controllers.V1
             var authResponse = await _customersService.FacebookLoginCustomerAsync(request.AccessToken);
             if (!authResponse.Success)
                 return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
-            return Ok(new AuthSuccessResponse { Token = authResponse.Token });
+            return Ok(new AuthSuccessResponse { Token = authResponse.Token, Data = authResponse.Data });
         }
 
         [AllowAnonymous]
@@ -92,7 +94,16 @@ namespace OK_OnBoarding.Controllers.V1
             var authResponse = await _customersService.GoogleLoginCustomerAsync(request);
             if (!authResponse.Success)
                 return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
-            return Ok(new AuthSuccessResponse { Token = authResponse.Token });
+            return Ok(new AuthSuccessResponse { Token = authResponse.Token, Data = authResponse.Data });
+        }
+
+        [HttpPost(ApiRoute.Customer.EnableCustomerCreation)]
+        public async Task<IActionResult> EnableCustomerCreation([FromBody] EnableUserCreationRequest request)
+        {
+            var genericResponse = await _otpService.VerifyOTPForCustomer(request.OTP, request.PhoneNumber);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
         }
     }
 }

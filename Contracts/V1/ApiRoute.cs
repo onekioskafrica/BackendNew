@@ -22,6 +22,7 @@ namespace OK_OnBoarding.Contracts
             public const string Get = Base + "/customers/{id}";
             public const string FacebookAuth = Base + "/customers/auth/fbauth";
             public const string GoogleAuth = Base + "/customers/auth/googleauth";
+            public const string EnableCustomerCreation = Base + "/customers/enablecustomercreation";
         }
 
         public static class StoreOwner
@@ -30,6 +31,7 @@ namespace OK_OnBoarding.Contracts
             public const string Login = Base + "/storeowners/login";
             public const string FacebookAuth = Base + "/storeowners/auth/fbauth";
             public const string GoogleAuth = Base + "/storeowners/auth/googleauth";
+            public const string EnableStoreOwnerCreation = Base + "/storeowners/enablestoreownercreation";
         }
 
         public static class Deliveryman
@@ -38,6 +40,7 @@ namespace OK_OnBoarding.Contracts
             public const string Login = Base + "/deliverymen/login";
             public const string FacebookAuth = Base + "/deliverymen/auth/fbauth";
             public const string GoogleAuth = Base + "/deliverymen/auth/googleauth";
+            public const string EnableDeliverymanCreation = Base + "/deliverymen/enabledeliverymancreation";
         }
     }
 }

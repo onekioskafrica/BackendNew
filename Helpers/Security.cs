@@ -24,6 +24,30 @@ namespace OK_OnBoarding.Helpers
             }
         }
 
+        public static string Encrypt(string clearText)
+        {
+            string encPwd = String.Empty;
+            try
+            {
+                var bytes = System.Text.Encoding.UTF8.GetBytes(clearText);
+                using (var hash = System.Security.Cryptography.SHA512.Create())
+                {
+                    var hashedInputBytes = hash.ComputeHash(bytes);
+                   
+                    var hashedInputStringBuilder = new System.Text.StringBuilder(128);
+                    
+                    encPwd = BitConverter.ToString(hashedInputBytes).Replace("-", "");
+                }
+            }
+            catch (Exception ex)
+            {
+                var err = ex.Message;
+                return null;
+            }
+
+            return encPwd;
+        }
+
         public static bool VerifyPassword(string password, byte[] storedHash, byte[] storedSalt)
         {
             if (password == null) throw new ArgumentNullException("password");
