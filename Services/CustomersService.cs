@@ -1,13 +1,16 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using OK_OnBoarding.Contracts.V1;
+using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Data;
 using OK_OnBoarding.Domains;
 using OK_OnBoarding.Entities;
 using OK_OnBoarding.ExternalContract;
 using OK_OnBoarding.Helpers;
+using OK_OnBoarding.Options;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -24,12 +27,20 @@ namespace OK_OnBoarding.Services
         private readonly DataContext _dataContext;
         private readonly JwtSettings _jwtSettings;
         private readonly IFacebookAuthService _facebookAuthService;
+        private readonly IOTPService _otpService;
+        private readonly IMapper _mapper;
+        private readonly TermiiAuthSettings _termiiAuthSettings;
+        private readonly AppSettings _appSettings;
 
-        public CustomersService(DataContext dataContext, JwtSettings jwtSettings, IFacebookAuthService facebookAuthService)
+        public CustomersService(DataContext dataContext, JwtSettings jwtSettings, IFacebookAuthService facebookAuthService, IOTPService otpService, IMapper mapper, TermiiAuthSettings termiiAuthSettings, AppSettings appSettings)
         {
             _dataContext = dataContext;
             _jwtSettings = jwtSettings;
             _facebookAuthService = facebookAuthService;
+            _otpService = otpService;
+            _mapper = mapper;
+            _termiiAuthSettings = termiiAuthSettings;
+            _appSettings = appSettings;
         }
 
         public async Task<AuthenticationResponse> GoogleLoginCustomerAsync(GoogleAuthRequest request)
@@ -44,9 +55,10 @@ namespace OK_OnBoarding.Services
                 var updated = await _dataContext.SaveChangesAsync();
                 if (updated <= 0)
                     return new AuthenticationResponse { Errors = new[] { "Failed to signin." } };
+                var userData = _mapper.Map<CustomerUserDataResponse>(customerExist);
 
                 var token = GenerateAuthenticationTokenForCustomer(customerExist);
-                return new AuthenticationResponse { Success = true, Token = token };
+                return new AuthenticationResponse { Success = true, Token = token, Data = userData };
             }
             else // Register Customer
             {
@@ -66,9 +78,10 @@ namespace OK_OnBoarding.Services
                 var created = await _dataContext.SaveChangesAsync();
                 if (created <= 0)
                     return new AuthenticationResponse { Errors = new[] { "Failed to register customer." } };
+                var userData = _mapper.Map<CustomerUserDataResponse>(newCustomer);
 
                 var token = GenerateAuthenticationTokenForCustomer(newCustomer);
-                return new AuthenticationResponse { Success = true, Token = token };
+                return new AuthenticationResponse { Success = true, Token = token, Data = userData };
             }
         }
 
@@ -105,10 +118,25 @@ namespace OK_OnBoarding.Services
             {
                 return new AuthenticationResponse { Errors = new[] { "Failed to register customer." } };
             }
-
+            var genericResponse = await _otpService.GenerateOTPForCustomer(OTPGenerationReason.TokenGeneration.ToString(), customer.PhoneNumber, customer.Email);
+            if (genericResponse.Status)
+            {
+                // Send Sms
+                var termiiRequest = new TermiiRequest()
+                {
+                    To = customer.PhoneNumber,
+                    From = _termiiAuthSettings.SenderId,
+                    Sms = _appSettings.AccountCreationOTPMsg.Replace("{TOKEN}", genericResponse.Message),
+                    Type = _termiiAuthSettings.Type,
+                    Channel = _termiiAuthSettings.Channel,
+                    ApiKey = _termiiAuthSettings.ApiKey
+                };
+                var termiiResponse = ApiHelper.DoWebRequestAsync<TermiiResponse>(_termiiAuthSettings.Url, termiiRequest, "post");
+            }
+            var userData = _mapper.Map<CustomerUserDataResponse>(customer);
             var token = GenerateAuthenticationTokenForCustomer(customer);
 
-            return new AuthenticationResponse { Success = true, Token = token };
+            return new AuthenticationResponse { Success = true, Token = token, Data = userData };
         }
 
         public async Task<AuthenticationResponse> FacebookLoginCustomerAsync(string accessToken)
@@ -144,10 +172,11 @@ namespace OK_OnBoarding.Services
                     var created = await _dataContext.SaveChangesAsync();
                     if (created <= 0)
                         return new AuthenticationResponse { Errors = new[] { "Failed to create customer" } };
+                    var userData = _mapper.Map<CustomerUserDataResponse>(newCustomer);
 
                     var token = GenerateAuthenticationTokenForCustomer(newCustomer);
 
-                    return new AuthenticationResponse { Success = true, Token = token };
+                    return new AuthenticationResponse { Success = true, Token = token, Data = userData };
                 }
                 else //Signin Customer
                 {
@@ -156,9 +185,10 @@ namespace OK_OnBoarding.Services
                     var updated = await _dataContext.SaveChangesAsync();
                     if (updated <= 0)
                         return new AuthenticationResponse { Errors = new[] { "Failed to signin." } };
+                    var userData = _mapper.Map<CustomerUserDataResponse>(customerExist);
 
                     var token = GenerateAuthenticationTokenForCustomer(customerExist);
-                    return new AuthenticationResponse { Success = true, Token = token };
+                    return new AuthenticationResponse { Success = true, Token = token, Data = userData };
                 }
             }
             else
@@ -196,8 +226,10 @@ namespace OK_OnBoarding.Services
             if (updated <= 0)
                 return new AuthenticationResponse { Errors = new[] { "Failed to signin." } };
 
+            var userData = _mapper.Map<CustomerUserDataResponse>(customer);
+
             var token = GenerateAuthenticationTokenForCustomer(customer);
-            return new AuthenticationResponse { Success = true, Token = token };
+            return new AuthenticationResponse { Success = true, Token = token, Data = userData };
         }
 
         private string GenerateAuthenticationTokenForCustomer(Customer customer)

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OK_OnBoarding.Contracts;
@@ -14,16 +15,18 @@ using System.Threading.Tasks;
 
 namespace OK_OnBoarding.Controllers.V1
 {
-    [Authorize]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class StoreOwnerController : Controller
     {
         private readonly IMapper _mapper;
         private readonly IStoreOwnerService _storeOwnerService;
+        private readonly IOTPService _otpService;
 
-        public StoreOwnerController(IMapper mapper, IStoreOwnerService storeOwnerService)
+        public StoreOwnerController(IMapper mapper, IStoreOwnerService storeOwnerService, IOTPService otpService)
         {
             _mapper = mapper;
             _storeOwnerService = storeOwnerService;
+            _otpService = otpService;
         }
 
         [AllowAnonymous]
@@ -45,7 +48,7 @@ namespace OK_OnBoarding.Controllers.V1
             {
                 return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
             }
-            return Ok(new AuthSuccessResponse { Token = authResponse.Token });
+            return Ok(new AuthSuccessResponse { Token = authResponse.Token, Data = authResponse.Data });
         }
 
         [AllowAnonymous]
@@ -63,7 +66,7 @@ namespace OK_OnBoarding.Controllers.V1
             if(!authResponse.Success)
                 return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
 
-            return Ok(new AuthSuccessResponse { Token = authResponse.Token });
+            return Ok(new AuthSuccessResponse { Token = authResponse.Token, Data = authResponse.Data });
         }
 
         [AllowAnonymous]
@@ -80,7 +83,7 @@ namespace OK_OnBoarding.Controllers.V1
             var authResponse = await _storeOwnerService.GoogleLoginStoreOwnerAsync(request);
             if(!authResponse.Success)
                 return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
-            return Ok(new AuthSuccessResponse { Token = authResponse.Token });
+            return Ok(new AuthSuccessResponse { Token = authResponse.Token, Data = authResponse.Data });
         }
 
         [AllowAnonymous]
@@ -90,7 +93,16 @@ namespace OK_OnBoarding.Controllers.V1
             var authResponse = await _storeOwnerService.FacebookLoginStoreOwnerAsync(request.AccessToken);
             if (!authResponse.Success)
                 return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
-            return Ok(new AuthSuccessResponse { Token = authResponse.Token });
+            return Ok(new AuthSuccessResponse { Token = authResponse.Token, Data = authResponse.Data });
+        }
+
+        [HttpPost(ApiRoute.StoreOwner.EnableStoreOwnerCreation)]
+        public async Task<IActionResult> EnableStoreOwnerCreation([FromBody] EnableUserCreationRequest request)
+        {
+            var genericResponse = await _otpService.VerifyOTPForStoreOwner(request.OTP, request.PhoneNumber);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
         }
     }
 }

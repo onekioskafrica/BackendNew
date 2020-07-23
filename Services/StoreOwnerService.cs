@@ -1,10 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Data;
 using OK_OnBoarding.Domains;
 using OK_OnBoarding.Entities;
 using OK_OnBoarding.ExternalContract;
 using OK_OnBoarding.Helpers;
+using OK_OnBoarding.Options;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -20,20 +23,28 @@ namespace OK_OnBoarding.Services
         private readonly DataContext _dataContext;
         private readonly JwtSettings _jwtSettings;
         private readonly IFacebookAuthService _facebookAuthService;
+        private readonly IOTPService _otpService;
+        private readonly IMapper _mapper;
+        private readonly TermiiAuthSettings _termiiAuthSettings;
+        private readonly AppSettings _appSettings;
 
-        public StoreOwnerService(DataContext dataContext, JwtSettings jwtSettings, IFacebookAuthService facebookAuthService)
+        public StoreOwnerService(DataContext dataContext, JwtSettings jwtSettings, IFacebookAuthService facebookAuthService, IOTPService otpService, IMapper mapper, TermiiAuthSettings termiiAuthSettings, AppSettings appSettings)
         {
             _dataContext = dataContext;
             _jwtSettings = jwtSettings;
             _facebookAuthService = facebookAuthService;
+            _otpService = otpService;
+            _mapper = mapper;
+            _termiiAuthSettings = termiiAuthSettings;
+            _appSettings = appSettings;
         }
 
         public async Task<AuthenticationResponse> CreateStoreOwnerAsync(StoreOwner storeOwner, string password)
         {
-            if(string.IsNullOrWhiteSpace(storeOwner.FirstName) || string.IsNullOrWhiteSpace(storeOwner.LastName) || string.IsNullOrWhiteSpace(storeOwner.EmailAddress))
+            if(string.IsNullOrWhiteSpace(storeOwner.FirstName) || string.IsNullOrWhiteSpace(storeOwner.LastName) || string.IsNullOrWhiteSpace(storeOwner.Email))
                 return new AuthenticationResponse { Errors = new[] { "FirstName, LastName and Email cannot be empty" } };
 
-            var storeOwnerExist = await _dataContext.StoreOwners.FirstOrDefaultAsync(s => s.EmailAddress == storeOwner.EmailAddress || s.PhoneNumber == storeOwner.PhoneNumber);
+            var storeOwnerExist = await _dataContext.StoreOwners.FirstOrDefaultAsync(s => s.Email == storeOwner.Email || s.PhoneNumber == storeOwner.PhoneNumber);
 
             if(storeOwnerExist != null)
             {
@@ -63,8 +74,25 @@ namespace OK_OnBoarding.Services
             if(created <= 0)
                 return new AuthenticationResponse { Errors = new[] { "Failed to register store owner." } };
 
+            var genericResponse = await _otpService.GenerateOTPForStoreOwner(OTPGenerationReason.TokenGeneration.ToString(), storeOwner.PhoneNumber, storeOwner.Email);
+            if (genericResponse.Status)
+            {
+                // Send Sms
+                var termiiRequest = new TermiiRequest()
+                {
+                    To = storeOwner.PhoneNumber,
+                    From = _termiiAuthSettings.SenderId,
+                    Sms = _appSettings.AccountCreationOTPMsg.Replace("{TOKEN}", genericResponse.Message),
+                    Type = _termiiAuthSettings.Type,
+                    Channel = _termiiAuthSettings.Channel,
+                    ApiKey = _termiiAuthSettings.ApiKey
+                };
+                var termiiResponse = ApiHelper.DoWebRequestAsync<TermiiResponse>(_termiiAuthSettings.Url, termiiRequest, "post");
+            }
+            var userData = _mapper.Map<UserDataResponse>(storeOwner);
+
             var token = GenerateAuthenticationTokenForStoreOwner(storeOwner);
-            return new AuthenticationResponse { Success = true, Token = token };
+            return new AuthenticationResponse { Success = true, Token = token, Data = userData };
         }
 
         public async Task<AuthenticationResponse> FacebookLoginStoreOwnerAsync(string accessToken)
@@ -82,12 +110,12 @@ namespace OK_OnBoarding.Services
                 if (fbUserInfo.Id == "Failed")
                     return new AuthenticationResponse { Errors = new[] { "Failed to Get Facebook User. " } };
 
-                var storeOwnerExist = await _dataContext.StoreOwners.FirstOrDefaultAsync(s => s.EmailAddress == fbUserInfo.Email);
+                var storeOwnerExist = await _dataContext.StoreOwners.FirstOrDefaultAsync(s => s.Email == fbUserInfo.Email);
                 if(storeOwnerExist == null) //Register StoreOwner
                 {
                     var newStoreOwner = new StoreOwner()
                     {
-                        EmailAddress = fbUserInfo.Email,
+                        Email = fbUserInfo.Email,
                         FirstName = fbUserInfo.FirstName,
                         MiddleName = fbUserInfo.MiddleName,
                         LastName = fbUserInfo.LastName,
@@ -102,8 +130,10 @@ namespace OK_OnBoarding.Services
                     if(created <= 0)
                         return new AuthenticationResponse { Errors = new[] { "Failed to create customer" } };
 
+                    var userData = _mapper.Map<UserDataResponse>(newStoreOwner);
+
                     var token = GenerateAuthenticationTokenForStoreOwner(newStoreOwner);
-                    return new AuthenticationResponse { Success = true, Token = token };
+                    return new AuthenticationResponse { Success = true, Token = token, Data = userData };
                 }
                 else //Signin StoreOwner
                 {
@@ -113,8 +143,10 @@ namespace OK_OnBoarding.Services
                     if(updated <= 0)
                         return new AuthenticationResponse { Errors = new[] { "Failed to signin." } };
 
+                    var userData = _mapper.Map<UserDataResponse>(storeOwnerExist);
+
                     var token = GenerateAuthenticationTokenForStoreOwner(storeOwnerExist);
-                    return new AuthenticationResponse { Success = true, Token = token };
+                    return new AuthenticationResponse { Success = true, Token = token, Data = userData };
                 }
             }
             else
@@ -127,7 +159,7 @@ namespace OK_OnBoarding.Services
         {
             if (string.IsNullOrWhiteSpace(request.FirstName) || string.IsNullOrWhiteSpace(request.LastName) || string.IsNullOrWhiteSpace(request.Email))
                 return new AuthenticationResponse { Errors = new[] { "FirstName, LastName and Email cannot be empty." } };
-            var storeOwnerExist = await _dataContext.StoreOwners.FirstOrDefaultAsync(s => s.EmailAddress == request.Email);
+            var storeOwnerExist = await _dataContext.StoreOwners.FirstOrDefaultAsync(s => s.Email == request.Email);
             if(storeOwnerExist != null) // Sign Store Owner in
             {
                 storeOwnerExist.LastLoginDate = DateTime.Now;
@@ -136,14 +168,16 @@ namespace OK_OnBoarding.Services
                 if(updated <= 0)
                     return new AuthenticationResponse { Errors = new[] { "Failed to signin." } };
 
+                var userData = _mapper.Map<UserDataResponse>(storeOwnerExist);
+
                 var token = GenerateAuthenticationTokenForStoreOwner(storeOwnerExist);
-                return new AuthenticationResponse { Success = true, Token = token };
+                return new AuthenticationResponse { Success = true, Token = token, Data = userData };
             }
             else // Register Store Owner
             {
                 var newStoreOwner = new StoreOwner()
                 {
-                    EmailAddress = request.Email,
+                    Email = request.Email,
                     FirstName = request.FirstName,
                     MiddleName = request.MiddleName,
                     LastName = request.LastName,
@@ -158,8 +192,10 @@ namespace OK_OnBoarding.Services
                 if(created <= 0)
                     return new AuthenticationResponse { Errors = new[] { "Failed to register customer." } };
 
+                var userData = _mapper.Map<UserDataResponse>(newStoreOwner);
+
                 var token = GenerateAuthenticationTokenForStoreOwner(newStoreOwner);
-                return new AuthenticationResponse { Success = true, Token = token };
+                return new AuthenticationResponse { Success = true, Token = token, Data = userData };
             }
         }
 
@@ -168,7 +204,7 @@ namespace OK_OnBoarding.Services
             if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
                 return new AuthenticationResponse { Errors = new[] { "Email/Password cannot be empty." } };
 
-            var storeOwner = await _dataContext.StoreOwners.SingleOrDefaultAsync(s => s.EmailAddress == email);
+            var storeOwner = await _dataContext.StoreOwners.SingleOrDefaultAsync(s => s.Email == email);
             if(storeOwner == null)
                 return new AuthenticationResponse { Errors = new[] { "Store Owner does not exist." } };
 
@@ -190,8 +226,10 @@ namespace OK_OnBoarding.Services
             if(updated <= 0)
                 return new AuthenticationResponse { Errors = new[] { "Failed to signin." } };
 
+            var userData = _mapper.Map<UserDataResponse>(storeOwner);
+
             var token = GenerateAuthenticationTokenForStoreOwner(storeOwner);
-            return new AuthenticationResponse { Success = true, Token = token };
+            return new AuthenticationResponse { Success = true, Token = token, Data = userData };
         }
 
         private string GenerateAuthenticationTokenForStoreOwner(StoreOwner storeOwner)
@@ -200,7 +238,7 @@ namespace OK_OnBoarding.Services
             {
                 new Claim("FirstName", storeOwner.FirstName),
                 new Claim("LastName", storeOwner.LastName),
-                new Claim("Email", storeOwner.EmailAddress),
+                new Claim("Email", storeOwner.Email),
                 new Claim("PhoneNumber", storeOwner.PhoneNumber),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };

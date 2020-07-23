@@ -20,6 +20,7 @@ namespace OK_OnBoarding.Installers
             services.AddScoped<ICustomersService, CustomersService>();
             services.AddScoped<IStoreOwnerService, StoreOwnerService>();
             services.AddScoped<IDelivermanService, DeliverymanService>();
+            services.AddScoped<IOTPService, OTPService>();
         }
     }
 }

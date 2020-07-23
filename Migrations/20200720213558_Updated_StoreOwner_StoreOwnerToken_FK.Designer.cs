@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OK_OnBoarding.Data;
 
 namespace OK_OnBoarding.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20200720213558_Updated_StoreOwner_StoreOwnerToken_FK")]
+    partial class Updated_StoreOwner_StoreOwnerToken_FK
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1194,7 +1196,7 @@ namespace OK_OnBoarding.Migrations
                     b.Property<DateTime?>("DateRegistered")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Email")
+                    b.Property<string>("EmailAddress")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("FirstName")
@@ -1241,7 +1243,7 @@ namespace OK_OnBoarding.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FirstName", "LastName", "PhoneNumber", "DateOfBirth", "Email", "ReferredBy", "IsVerified", "IsFacebookRegistered", "IsGoogleRegistered");
+                    b.HasIndex("FirstName", "LastName", "PhoneNumber", "DateOfBirth", "EmailAddress", "ReferredBy", "IsVerified", "IsFacebookRegistered", "IsGoogleRegistered");
 
                     b.ToTable("StoreOwners");
                 });

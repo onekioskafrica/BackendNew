@@ -9,9 +9,9 @@ namespace OK_OnBoarding.Entities
 {
     public class StoreOwnerToken : Token
     {
-        [ForeignKey("Store")]
+        [ForeignKey("StoreOwner")]
         public Guid StoreOwnerId { get; set; }
 
-        public Store Store { get; set; } // The Store the token was generated for.
+        public StoreOwner StoreOwner { get; set; } // The StoreOwner the token was generated for.
     }
 }

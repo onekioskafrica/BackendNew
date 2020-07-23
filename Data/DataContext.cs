@@ -56,7 +56,7 @@ namespace OK_OnBoarding.Data
             builder.Entity<Store>()
                 .HasIndex(s => new { s.StoreOwnerId, s.StoreId, s.StoreName, s.DateCreated, s.IsActivated });
             builder.Entity<StoreOwner>()
-                .HasIndex(s => new { s.FirstName, s.LastName, s.PhoneNumber, s.DateOfBirth, s.EmailAddress, s.ReferredBy, s.IsVerified, s.IsFacebookRegistered, s.IsGoogleRegistered });
+                .HasIndex(s => new { s.FirstName, s.LastName, s.PhoneNumber, s.DateOfBirth, s.Email, s.ReferredBy, s.IsVerified, s.IsFacebookRegistered, s.IsGoogleRegistered });
             builder.Entity<StoresBankAccount>()
                .HasIndex(s => new { s.StoreId, s.BankCode, s.AccountNumber, s.BvnNumber });
             builder.Entity<StoresBusinessInformation>()

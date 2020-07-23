@@ -23,7 +23,7 @@ namespace OK_OnBoarding.Contracts.V1.Requests
         [Required]
         [DataType(DataType.EmailAddress)]
         [JsonPropertyName("email")]
-        public string EmailAddress { get; set; }
+        public string Email { get; set; }
 
         [Required]
         [DataType(DataType.PhoneNumber)]

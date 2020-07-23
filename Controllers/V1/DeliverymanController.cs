@@ -19,11 +19,13 @@ namespace OK_OnBoarding.Controllers.V1
     {
         private readonly IMapper _mapper;
         private readonly IDelivermanService _delivermanService;
+        private readonly IOTPService _otpService;
 
-        public DeliverymanController(IMapper mapper, IDelivermanService delivermanService)
+        public DeliverymanController(IMapper mapper, IDelivermanService delivermanService, IOTPService otpService)
         {
             _mapper = mapper;
             _delivermanService = delivermanService;
+            _otpService = otpService;
         }
 
         [AllowAnonymous]
@@ -43,7 +45,7 @@ namespace OK_OnBoarding.Controllers.V1
 
             if(!authResponse.Success)
                 return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
-            return Ok(new AuthSuccessResponse { Token = authResponse.Token });
+            return Ok(new AuthSuccessResponse { Token = authResponse.Token, Data = authResponse.Data });
         }
 
         [AllowAnonymous]
@@ -62,7 +64,7 @@ namespace OK_OnBoarding.Controllers.V1
             {
                 return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
             }
-            return Ok(new AuthSuccessResponse { Token = authResponse.Token });
+            return Ok(new AuthSuccessResponse { Token = authResponse.Token, Data = authResponse.Data });
         }
 
         [AllowAnonymous]
@@ -79,7 +81,7 @@ namespace OK_OnBoarding.Controllers.V1
             var authResponse = await _delivermanService.GoogleLoginDeliverymanAsync(request);
             if(!authResponse.Success)
                 return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
-            return Ok(new AuthSuccessResponse { Token = authResponse.Token });
+            return Ok(new AuthSuccessResponse { Token = authResponse.Token, Data = authResponse.Data });
         }
 
         [AllowAnonymous]
@@ -89,7 +91,17 @@ namespace OK_OnBoarding.Controllers.V1
             var authResponse = await _delivermanService.FacebookLoginDeliverymanAsync(request.AccessToken);
             if (!authResponse.Success)
                 return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
-            return Ok(new AuthSuccessResponse { Token = authResponse.Token });
+            return Ok(new AuthSuccessResponse { Token = authResponse.Token, Data = authResponse.Data });
+        }
+
+        [HttpPost(ApiRoute.Deliveryman.EnableDeliverymanCreation)]
+        public async Task<IActionResult> EnableDeliverymanCreation([FromBody] EnableUserCreationRequest request)
+        {
+            var genericResponse = await _otpService.VerifyOTPForDeliveryman(request.OTP, request.PhoneNumber);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+
         }
     }
 }
