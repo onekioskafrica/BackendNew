@@ -48,7 +48,7 @@ namespace OK_OnBoarding.Helpers
 
                 return result;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return result;
             }

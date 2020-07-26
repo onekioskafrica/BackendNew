@@ -13,6 +13,8 @@ namespace OK_OnBoarding.Contracts
         public static class Admin
         {
             public const string Get = Base + "/admins/{id}";
+            public const string CreateAdmin = Base + "/admins/create";
+            public const string Login = Base + "/admins/login";
         }
 
         public static class Customer
@@ -41,6 +43,20 @@ namespace OK_OnBoarding.Contracts
             public const string FacebookAuth = Base + "/deliverymen/auth/fbauth";
             public const string GoogleAuth = Base + "/deliverymen/auth/googleauth";
             public const string EnableDeliverymanCreation = Base + "/deliverymen/enabledeliverymancreation";
+        }
+
+        public static class SuperAdmin
+        {
+            public const string CreateSuperAdmin = Base + "/superadmin/create";
+            public const string ChangePassword = Base + "/superadmin/changepassword";
+            public const string Login = Base + "/superadmin/login";
+            public const string CreateAdmin = Base + "/superadmin/createadmin";
+            public const string DeactivateAdmin = Base + "/superadmin/deactivateadmin";
+            public const string GetAllPrivileges = Base + "superadmin/getallprivileges";
+            public const string GetAdminById = Base + "superadmin/getadminbyid";
+            public const string GetAllAdmins = Base + "superadmin/getalladmins";
+            public const string GetAllAdminsActivityLogs = Base + "superadmin/getalladminsactivitylogs";
+            public const string GetSingleAdminAcitvityLogs = Base + "superadmin/getsingleadminsacitivitylogs";
         }
     }
 }

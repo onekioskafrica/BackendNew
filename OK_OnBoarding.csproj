@@ -11,6 +11,12 @@
     <Compile Remove="Migrations\20200718065721_Created_Token_Tables.Designer.cs" />
     <Compile Remove="Migrations\20200723204435_Changed_Id_In_Customers.cs" />
     <Compile Remove="Migrations\20200723204435_Changed_Id_In_Customers.Designer.cs" />
+    <Compile Remove="Migrations\20200724191826_Changed_SuperAdmin_ID.cs" />
+    <Compile Remove="Migrations\20200724191826_Changed_SuperAdmin_ID.Designer.cs" />
+    <Compile Remove="Migrations\20200726080555_Added_PerformerIdFK_to_AdminActivityLog.cs" />
+    <Compile Remove="Migrations\20200726080555_Added_PerformerIdFK_to_AdminActivityLog.Designer.cs" />
+    <Compile Remove="Migrations\20200726081000_Added_PerformerIdFK_to_AdminActivityLog.cs" />
+    <Compile Remove="Migrations\20200726081000_Added_PerformerIdFK_to_AdminActivityLog.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>

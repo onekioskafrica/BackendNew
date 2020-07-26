@@ -5,10 +5,9 @@ using System.Threading.Tasks;
 
 namespace OK_OnBoarding.Helpers
 {
-    public enum UserFlagEnum
+    public class Roles
     {
-        STOREOWNER = 1,
-        CUSTOMER = 2,
-        DELIVERYMAN = 3
+        public const string SuperAdmin = "SuperAdmin";
+        public const string Admin = "Admin";
     }
 }

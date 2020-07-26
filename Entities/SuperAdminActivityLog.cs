@@ -11,9 +11,9 @@ namespace OK_OnBoarding.Entities
     {
         [Key]
         public Guid Id { get; set; }
-        public int ActionCarriedOutId { get; set; }
+        public string Action { get; set; }
         public Guid? AdminId { get; set; }
-        public DateTime DateOfAction { get; set; }
+        public DateTime? DateOfAction { get; set; }
         public string ReasonForAction { get; set; }
 
         [ForeignKey("Store")]
