@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using OK_OnBoarding.Contracts.V1.Requests;
 using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Data;
 using OK_OnBoarding.Domains;
@@ -27,6 +28,74 @@ namespace OK_OnBoarding.Services
             _dataContext = dataContext;
             _mapper = mapper;
             _jwtSettings = jwtSettings;
+        }
+
+        public async Task<GenericResponse> ChangePassword(SuperAdminChangePasswordRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.OldPassword) || string.IsNullOrWhiteSpace(request.NewPassword) || string.IsNullOrWhiteSpace(request.SuperAdminId.ToString()))
+                return new GenericResponse { Status = false, Message = "OldPassword, NewPassword and AdminId cannot be empty." };
+
+            var superAdminExist = await _dataContext.SuperAdmin.FirstOrDefaultAsync(s => s.Id == request.SuperAdminId);
+
+            if (superAdminExist == null)
+            {
+                return new GenericResponse { Status = false, Message = "Invalid Id" };
+            }
+
+            //Check the correctness of OldPassword
+            bool isPasswordCorrect = false;
+            try
+            {
+                isPasswordCorrect = Security.VerifyPassword(request.OldPassword, superAdminExist.PasswordHash, superAdminExist.PasswordSalt);
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (!isPasswordCorrect)
+                return new GenericResponse { Status = false, Message = "Incorrect Old Password." };
+
+            //Create new PasswordHash and PasswordSalt from NewPassword
+            byte[] passwordHash, passwordSalt;
+            try
+            {
+                Security.CreatePasswordHash(request.NewPassword, out passwordHash, out passwordSalt);
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred" };
+            }
+
+            superAdminExist.PasswordHash = passwordHash;
+            superAdminExist.PasswordSalt = passwordSalt;
+
+            _dataContext.Entry(superAdminExist).State = EntityState.Modified;
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Failed to change password." };
+            }
+            if (updated <= 0)
+                return new GenericResponse { Status = false, Message = "Failed to change password." };
+
+            //Send mail to SuperAdmin
+
+            //Add this action to AdminActivityLog
+            await _dataContext.SuperAdminActivityLogs.AddAsync(new SuperAdminActivityLog { Action = SuperAdminActionsEnum.SUPER_CHANGE_PASSWORD.ToString(), DateOfAction = DateTime.Now });
+            try
+            {
+                await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                //Do nothing
+            }
+
+            return new GenericResponse { Status = true, Message = "Password Changed Successfully." };
         }
 
         public async Task<GenericResponse> CreateAdminAsync(Admin admin, string password)

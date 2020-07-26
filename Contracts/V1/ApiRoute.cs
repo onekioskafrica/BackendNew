@@ -15,6 +15,7 @@ namespace OK_OnBoarding.Contracts
             public const string Get = Base + "/admins/{id}";
             public const string CreateAdmin = Base + "/admins/create";
             public const string Login = Base + "/admins/login";
+            public const string ChangePassword = Base + "/admins/changepassword";
         }
 
         public static class Customer

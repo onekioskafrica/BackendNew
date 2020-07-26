@@ -10,6 +10,7 @@ namespace OK_OnBoarding.Helpers
         LOGIN = 1,
         SUPER_CREATE_ADMIN = 2,
         SUPER_DEACTIVATE_ADMIN = 3,
-        SUPER_DEACTIVATE_STORE = 4
+        SUPER_DEACTIVATE_STORE = 4,
+        SUPER_CHANGE_PASSWORD = 5
     }
 }

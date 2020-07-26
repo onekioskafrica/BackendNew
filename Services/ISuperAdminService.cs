@@ -1,4 +1,5 @@
-﻿using OK_OnBoarding.Contracts.V1.Responses;
+﻿using OK_OnBoarding.Contracts.V1.Requests;
+using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Domains;
 using OK_OnBoarding.Entities;
 using System;
@@ -14,6 +15,7 @@ namespace OK_OnBoarding.Services
         Task<GenericResponse> SuperAdminChangePasswordAsync(int superAdminId, string oldPassword, string newPassword);
         Task<AuthenticationResponse> LoginSuperAdminAsync(string email, string password);
         Task<GenericResponse> CreateAdminAsync(Admin admin, string password);
+        Task<GenericResponse> ChangePassword(SuperAdminChangePasswordRequest request);
         Task<GenericResponse> DeactivateAdminAsync(Guid adminId);
         Task<GenericResponse> GetAllPrivilegesAsync();
         Task<GenericResponse> GetAdminByIdAsync();

@@ -95,5 +95,23 @@ namespace OK_OnBoarding.Controllers.V1
                 return BadRequest(genericResponse);
             return Ok(genericResponse);
         }
+
+        [Authorize(Roles = Roles.SuperAdmin)]
+        [HttpPost(ApiRoute.SuperAdmin.ChangePassword)]
+        public async Task<IActionResult> ChangePassword([FromBody] SuperAdminChangePasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+
+            var genericResponse = await _superAdminService.ChangePassword(request);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
     }
 }
