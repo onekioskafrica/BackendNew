@@ -19,7 +19,8 @@ namespace OK_OnBoarding.Entities
         public byte[] PasswordHash { get; set; }
         public byte[] PasswordSalt { get; set; }
         public string PhoneNumber { get; set; }
-        public DateTime LastLoginDate { get; set; }
+        public DateTime? DateCreated { get; set; }
+        public DateTime? LastLoginDate { get; set; }
         public bool IsAdmin { get; set; }
 
 

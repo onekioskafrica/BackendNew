@@ -20,6 +20,10 @@ namespace OK_OnBoarding.Helpers
             CreateMap<StoreOwner, UserDataResponse>();
             CreateMap<Customer, CustomerUserDataResponse>();
             CreateMap<Deliveryman, UserDataResponse>();
+            CreateMap<CreateSuperAdminRequest, SuperAdmin>();
+            CreateMap<SuperAdmin, SuperAdminUserDataResponse>();
+            CreateMap<CreateAdminRequest, Admin>();
+            CreateMap<Admin, AdminUserDataResponse>();
         }
     }
 }

@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OK_OnBoarding.Data;
 
 namespace OK_OnBoarding.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20200725065749_Added_Seed_Data_To_Priviliges")]
+    partial class Added_Seed_Data_To_Priviliges
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -264,28 +266,40 @@ namespace OK_OnBoarding.Migrations
                     b.ToTable("Admins");
                 });
 
+            modelBuilder.Entity("OK_OnBoarding.Entities.AdminAction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Activity")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AdminActions");
+                });
+
             modelBuilder.Entity("OK_OnBoarding.Entities.AdminActivityLog", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Action")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("ActionCarriedOut")
+                        .HasColumnType("int");
 
-                    b.Property<Guid?>("AdminId")
+                    b.Property<Guid>("AdminId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime?>("DateOfAction")
+                    b.Property<DateTime>("DateOfAction")
                         .HasColumnType("datetime2");
-
-                    b.Property<Guid>("PerformerId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ReasonOfAction")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("StoreId")
+                    b.Property<Guid>("StoreId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
@@ -293,8 +307,6 @@ namespace OK_OnBoarding.Migrations
                     b.HasIndex("AdminId");
 
                     b.HasIndex("DateOfAction");
-
-                    b.HasIndex("StoreId");
 
                     b.ToTable("AdminActivityLogs");
                 });
@@ -1435,19 +1447,34 @@ namespace OK_OnBoarding.Migrations
                     b.ToTable("SuperAdmin");
                 });
 
+            modelBuilder.Entity("OK_OnBoarding.Entities.SuperAdminActions", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Activity")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SuperAdminActions");
+                });
+
             modelBuilder.Entity("OK_OnBoarding.Entities.SuperAdminActivityLog", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Action")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("ActionCarriedOutId")
+                        .HasColumnType("int");
 
                     b.Property<Guid?>("AdminId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime?>("DateOfAction")
+                    b.Property<DateTime>("DateOfAction")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("ReasonForAction")
@@ -1465,7 +1492,7 @@ namespace OK_OnBoarding.Migrations
 
                     b.HasIndex("SuperAdminId");
 
-                    b.HasIndex("AdminId", "StoreId", "DateOfAction");
+                    b.HasIndex("AdminId", "ActionCarriedOutId", "StoreId", "DateOfAction");
 
                     b.ToTable("SuperAdminActivityLogs");
                 });
@@ -1727,11 +1754,9 @@ namespace OK_OnBoarding.Migrations
                 {
                     b.HasOne("OK_OnBoarding.Entities.Admin", "Admin")
                         .WithMany("AdminActivityLogs")
-                        .HasForeignKey("AdminId");
-
-                    b.HasOne("OK_OnBoarding.Entities.Store", "Store")
-                        .WithMany()
-                        .HasForeignKey("StoreId");
+                        .HasForeignKey("AdminId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("OK_OnBoarding.Entities.AdminSelfEditHistory", b =>

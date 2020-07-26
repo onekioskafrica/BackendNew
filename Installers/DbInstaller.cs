@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OK_OnBoarding.Data;
@@ -21,6 +22,8 @@ namespace OK_OnBoarding.Installers
             services.AddScoped<IStoreOwnerService, StoreOwnerService>();
             services.AddScoped<IDelivermanService, DeliverymanService>();
             services.AddScoped<IOTPService, OTPService>();
+            services.AddScoped<ISuperAdminService, SuperAdminService>();
+            services.AddScoped<IAdminService, AdminService>();
         }
     }
 }

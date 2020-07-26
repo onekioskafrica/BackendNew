@@ -43,6 +43,16 @@ namespace OK_OnBoarding.Data
                 .HasIndex(d => new { d.RiderId, d.FirstName, d.LastName, d.Email, d.PhoneNumber, d.DateOfBirth, d.State, d.IsVerified, d.IsEnabled, d.IsActive });
             builder.Entity<Order>()
                 .HasIndex(o => new { o.Status, o.SubTotal, o.ItemDiscount, o.Tax, o.Shipping, o.Total, o.Promo, o.Discount, o.GrandTotal, o.FirstName, o.LastName, o.Mobile, o.Email, o.City, o.State, o.CreatedAt });
+            builder.Entity<Privilege>()
+                .HasData( 
+                new Privilege() { Id = 1, Action = "Create Other Admin" },
+                new Privilege() { Id = 2, Action = "Deactivate Other Admin" },
+                new Privilege() { Id = 3, Action = "Create Blogpost" },
+                new Privilege() { Id = 4, Action = "Publish Blogpost" },
+                new Privilege() { Id = 5, Action = "Deactivate Blogpost" },
+                new Privilege() { Id = 6, Action = "Approve Store Creation" },
+                new Privilege() { Id = 7, Action = "Deactivate Store" }
+                );
             builder.Entity<Product>()
                 .HasIndex(p => new { p.Name, p.Brand, p.InStock, p.Model, p.TypeId });
             builder.Entity<ProductCategory>()
@@ -62,7 +72,7 @@ namespace OK_OnBoarding.Data
             builder.Entity<StoresBusinessInformation>()
                 .HasIndex(s => new { s.City, s.State, s.TaxIdentificationNumber, s.BusinessRegistrationNumber, s.VatRegistered, s.CompanyLegalName });
             builder.Entity<SuperAdminActivityLog>()
-                .HasIndex(s => new { s.AdminId, s.ActionCarriedOutId, s.StoreId, s.DateOfAction });
+                .HasIndex(s => new { s.AdminId, s.StoreId, s.DateOfAction });
             builder.Entity<Transactions>()
                 .HasIndex(t => new { t.Code, t.Type, t.Mode, t.Status, t.CreatedAt });
             builder.Entity<WishList>()
@@ -71,7 +81,6 @@ namespace OK_OnBoarding.Data
         }
 
         public DbSet<Admin> Admins { get; set; }
-        public DbSet<AdminAction> AdminActions { get; set; }
         public DbSet<AdminActivityLog> AdminActivityLogs { get; set; }
         public DbSet<AdminSelfEditHistory> AdminSelfEditHistory { get; set; }
         public DbSet<BlogPostComment> BlogPostComments { get; set; }
@@ -98,7 +107,6 @@ namespace OK_OnBoarding.Data
         public DbSet<StoresBankAccount> StoresBankAccounts { get; set; }
         public DbSet<StoresBusinessInformation> StoresBusinessInformation { get; set; }
         public DbSet<SuperAdmin> SuperAdmin { get; set; }
-        public DbSet<SuperAdminActions> SuperAdminActions { get; set; }
         public DbSet<SuperAdminActivityLog> SuperAdminActivityLogs { get; set; }
         public DbSet<SuperAdminAdminRoleEditHistory> SuperAdminAdminRoleEditHistories { get; set; }
         public DbSet<SuperAdminSelfEditHistory> SuperAdminSelfEditHistories { get; set; }

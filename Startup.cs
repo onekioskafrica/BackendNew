@@ -35,7 +35,7 @@ namespace OK_OnBoarding
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, DataContext dataContext)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -47,8 +47,6 @@ namespace OK_OnBoarding
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-
-            dataContext.Database.Migrate();
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
