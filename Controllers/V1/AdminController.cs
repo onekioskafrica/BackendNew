@@ -65,5 +65,23 @@ namespace OK_OnBoarding.Controllers.V1
                 return BadRequest(genericResponse);
             return Ok(genericResponse);
         }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpPost(ApiRoute.Admin.ChangePassword)]
+        public async Task<IActionResult> ChangePassword([FromBody] AdminChangePasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+
+            var genericResponse = await _adminService.ChangePassword(request);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
     }
 }

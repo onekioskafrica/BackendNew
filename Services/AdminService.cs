@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using OK_OnBoarding.Contracts.V1.Requests;
 using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Data;
 using OK_OnBoarding.Domains;
@@ -27,6 +28,74 @@ namespace OK_OnBoarding.Services
             _dataContext = dataContext;
             _mapper = mapper;
             _jwtSettings = jwtSettings;
+        }
+
+        public async Task<GenericResponse> ChangePassword(AdminChangePasswordRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.OldPassword) || string.IsNullOrWhiteSpace(request.NewPassword) || string.IsNullOrWhiteSpace(request.AdminId.ToString()))
+                return new GenericResponse { Status = false, Message = "OldPassword, NewPassword and AdminId cannot be empty." };
+
+            var adminExist = await _dataContext.Admins.FirstOrDefaultAsync(a => a.AdminId == request.AdminId);
+
+            if(adminExist == null)
+            {
+                return new GenericResponse { Status = false, Message = "Invalid Admin Id" };
+            }
+
+            //Check the correctness of OldPassword
+            bool isPasswordCorrect = false;
+            try
+            {
+                isPasswordCorrect = Security.VerifyPassword(request.OldPassword, adminExist.PasswordHash, adminExist.PasswordSalt);
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (!isPasswordCorrect)
+                return new GenericResponse { Status = false, Message = "Incorrect Old Password." };
+
+            //Create new PasswordHash and PasswordSalt from NewPassword
+            byte[] passwordHash, passwordSalt;
+            try
+            {
+                Security.CreatePasswordHash(request.NewPassword, out passwordHash, out passwordSalt);
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred" };
+            }
+
+            adminExist.PasswordHash = passwordHash;
+            adminExist.PasswordSalt = passwordSalt;
+
+            _dataContext.Entry(adminExist).State = EntityState.Modified;
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Failed to change password." };
+            }
+            if (updated <= 0)
+                return new GenericResponse { Status = false, Message = "Failed to change password." };
+
+            //Send mail to Admin
+
+            //Add this action to AdminActivityLog
+            await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { Action = AdminActionsEnum.ADMIN_CHANGE_PASSWORD.ToString(), PerformerId = adminExist.AdminId, DateOfAction = DateTime.Now });
+            try
+            {
+                await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                //Do nothing
+            }
+
+            return new GenericResponse { Status = true, Message = "Password Changed Successfully." };
         }
 
         public async Task<GenericResponse> CreateAdminAsync(Admin admin, string password, Guid callerId)
@@ -60,7 +129,17 @@ namespace OK_OnBoarding.Services
             admin.CreatedBy = callerId;
 
             await _dataContext.Admins.AddAsync(admin);
-            var created = await _dataContext.SaveChangesAsync();
+            var created = 0;
+            try
+            {
+                created = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                response.Status = false;
+                response.Message = "Failed to create Admin";
+                return response;
+            }
             if (created <= 0)
             {
                 response.Status = false;
@@ -72,7 +151,14 @@ namespace OK_OnBoarding.Services
 
             //Log Admin Activity
             await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { PerformerId = callerId, Action = AdminActionsEnum.ADMIN_CREATE_ADMIN.ToString(), AdminId = admin.AdminId, DateOfAction = DateTime.Now });
-            await _dataContext.SaveChangesAsync();
+            try
+            {
+                await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                //Do nothing
+            }
 
             var userData = _mapper.Map<AdminUserDataResponse>(admin);
             response.Status = true;
@@ -110,8 +196,15 @@ namespace OK_OnBoarding.Services
 
             // Add activity to admin log
             await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { Action =  AdminActionsEnum.LOGIN.ToString(), DateOfAction = DateTime.Now } );
-            await _dataContext.SaveChangesAsync();
-            await _dataContext.SaveChangesAsync();
+            try
+            {
+                await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                //Do nothing
+            }
+
 
             var userData = _mapper.Map<AdminUserDataResponse>(admin);
             var token = GenerateAuthenticationTokenForAdmin(admin);
