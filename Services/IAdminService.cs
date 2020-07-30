@@ -1,4 +1,5 @@
 ﻿using OK_OnBoarding.Contracts.V1.Requests;
+using OK_OnBoarding.Contracts.V1.Requests.Queries;
 using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Domains;
 using OK_OnBoarding.Entities;
@@ -14,5 +15,9 @@ namespace OK_OnBoarding.Services
         Task<AuthenticationResponse> LoginAdminAsync(string email, string password);
         Task<GenericResponse> CreateAdminAsync(Admin admin, string password, Guid callerId);
         Task<GenericResponse> ChangePassword(AdminChangePasswordRequest request);
+        Task<List<Store>> GetAllStoresAsync(PaginationFilter paginationFilter = null);
+        Task<List<Store>> GetAllActivatedStoresAsync(PaginationFilter paginationFilter = null);
+        Task<List<Store>> GetAllUnActivatedStoresAsync(PaginationFilter paginationFilter = null);
+        Task<GenericResponse> GetStoreDetailsByIdAsync(Guid storeId);
     }
 }

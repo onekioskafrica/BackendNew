@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OK_OnBoarding.Contracts;
 using OK_OnBoarding.Contracts.V1.Requests;
+using OK_OnBoarding.Contracts.V1.Requests.Queries;
 using OK_OnBoarding.Contracts.V1.Responses;
+using OK_OnBoarding.Domains;
 using OK_OnBoarding.Entities;
 using OK_OnBoarding.Helpers;
 using OK_OnBoarding.Services;
@@ -43,6 +45,76 @@ namespace OK_OnBoarding.Controllers.V1
                 return BadRequest(new AuthFailedResponse { Errors = authResponse.Errors });
 
             return Ok(new AuthSuccessResponse { Token = authResponse.Token, Data = authResponse.Data });
+        }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpGet(ApiRoute.Admin.GetAllStores)]
+        public async Task<IActionResult> GetAllStores([FromQuery] PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+
+            var allStores = await _adminService.GetAllStoresAsync(pagination);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<Store>(allStores));
+
+            var paginationResponse = new PagedResponse<Store> { 
+                Data = allStores,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?) null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?) null
+            };
+            return Ok(paginationResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpGet(ApiRoute.Admin.GetAllActivatedStores)]
+        public async Task<IActionResult> GetAllActivatedStores([FromQuery] PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+
+            var allActivatedStores = await _adminService.GetAllActivatedStoresAsync(pagination);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<Store>(allActivatedStores));
+
+            var paginationResponse = new PagedResponse<Store>
+            {
+                Data = allActivatedStores,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
+            };
+            return Ok(paginationResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpGet(ApiRoute.Admin.GetAllUnActivatedStores)]
+        public async Task<IActionResult> GetAllUnActivatedStores([FromQuery] PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+
+            var allUnactivatedStores = await _adminService.GetAllUnActivatedStoresAsync(pagination);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<Store>(allUnactivatedStores));
+
+            var paginationResponse = new PagedResponse<Store>
+            {
+                Data = allUnactivatedStores,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
+            };
+            return Ok(paginationResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpGet(ApiRoute.Admin.GetStoreDetailsById)]
+        public async Task<IActionResult> GetStoreDetailsById([FromQuery] Guid storeId)
+        {
+            var genericResponse = await _adminService.GetStoreDetailsByIdAsync(storeId);
+
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
         }
 
         [Authorize(Roles = Roles.Admin)]

@@ -74,7 +74,7 @@ namespace OK_OnBoarding.Services
             await _dataContext.SaveChangesAsync();
 
             var storeResponseData = _mapper.Map<StoreCreationDataResponse>(store);
-            response.Body = storeResponseData;
+            response.Data = storeResponseData;
 
             if (logoUrl == string.Empty)
             {
@@ -119,7 +119,7 @@ namespace OK_OnBoarding.Services
             var storeBankAccountInfo = _mapper.Map<StoresBankAccount>(storesBankAccount);
 
             response.Status = true;
-            response.Body = storeBankAccountInfo;
+            response.Data = storeBankAccountInfo;
             response.Message = "Successfully added store bank information";
             return response;
         }

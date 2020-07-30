@@ -15,6 +15,10 @@ namespace OK_OnBoarding.Contracts
             public const string Get = Base + "/admins/{id}";
             public const string CreateAdmin = Base + "/admins/create";
             public const string Login = Base + "/admins/login";
+            public const string GetAllUnActivatedStores = Base + "/admins/getunactivatedstores";
+            public const string GetAllStores = Base + "/admins/getallstores";
+            public const string GetAllActivatedStores = Base + "/admins/getactivatedstores";
+            public const string GetStoreDetailsById = Base + "/admins/getstoredetailsbyid";
             public const string ChangePassword = Base + "/admins/changepassword";
         }
 

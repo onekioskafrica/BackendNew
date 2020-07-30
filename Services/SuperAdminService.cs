@@ -146,7 +146,7 @@ namespace OK_OnBoarding.Services
             var userData = _mapper.Map<AdminUserDataResponse>(admin);
             response.Status = true;
             response.Message = "Success";
-            response.Body = userData;
+            response.Data = userData;
             return response;
         }
 
@@ -213,7 +213,7 @@ namespace OK_OnBoarding.Services
             GenericResponse response = new GenericResponse();
             var allPrivileges = await _dataContext.Priviliges.ToListAsync();
             response.Status = true;
-            response.Body = allPrivileges;
+            response.Data = allPrivileges;
             return response;
         }
 
