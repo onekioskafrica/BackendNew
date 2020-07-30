@@ -59,5 +59,12 @@ namespace OK_OnBoarding.Contracts
             public const string GetAllAdminsActivityLogs = Base + "superadmin/getalladminsactivitylogs";
             public const string GetSingleAdminAcitvityLogs = Base + "superadmin/getsingleadminsacitivitylogs";
         }
+
+        public static class Store
+        {
+            public const string CreateStoreBasic = Base + "/store/basicstoreinfo";
+            public const string UploadStoreBankDetails = Base + "/store/bankdetails";
+            public const string UploadStoreBusinessInfo = Base + "/store/businessinfo";
+        }
     }
 }

@@ -24,6 +24,12 @@ namespace OK_OnBoarding.Helpers
             CreateMap<SuperAdmin, SuperAdminUserDataResponse>();
             CreateMap<CreateAdminRequest, Admin>();
             CreateMap<Admin, AdminUserDataResponse>();
+            CreateMap<CreateStoreBasicRequest, Store>();
+            CreateMap<CreateStoreBusinessInfoRequest, StoresBusinessInformation>();
+            CreateMap<CreateStoreBankAccountInformationRequest, StoresBankAccount>();
+            CreateMap<Store, StoreCreationDataResponse>();
+            CreateMap<StoresBusinessInformation, StoresBusinessInfoDataResponse>();
+            CreateMap<StoresBankAccount, StoresBankInformationDataResponse>();
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Amazon.S3;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,12 +19,16 @@ namespace OK_OnBoarding.Installers
             services.AddDbContext<DataContext>(options =>
                 options.UseSqlServer(
                     configuration.GetConnectionString("DefaultConnection")));
+            services.AddDefaultAWSOptions(configuration.GetAWSOptions());
+            services.AddAWSService<IAmazonS3>();
             services.AddScoped<ICustomersService, CustomersService>();
             services.AddScoped<IStoreOwnerService, StoreOwnerService>();
             services.AddScoped<IDelivermanService, DeliverymanService>();
             services.AddScoped<IOTPService, OTPService>();
             services.AddScoped<ISuperAdminService, SuperAdminService>();
             services.AddScoped<IAdminService, AdminService>();
+            services.AddScoped<IAwsS3UploadService, AwsS3UploadService>();
+            services.AddScoped<IStoreService, StoreService>();
         }
     }
 }
