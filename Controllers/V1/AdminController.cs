@@ -107,6 +107,17 @@ namespace OK_OnBoarding.Controllers.V1
         }
 
         [Authorize(Roles = Roles.Admin)]
+        [HttpPut(ApiRoute.Admin.ActivateStore)]
+        public async Task<IActionResult> ActivateStore([FromBody] ActivateStoreRequest request)
+        {
+            var genericResponse = await _adminService.ActivateStore(request);
+
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
         [HttpGet(ApiRoute.Admin.GetStoreDetailsById)]
         public async Task<IActionResult> GetStoreDetailsById([FromQuery] Guid storeId)
         {

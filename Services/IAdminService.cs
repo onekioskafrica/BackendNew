@@ -19,5 +19,6 @@ namespace OK_OnBoarding.Services
         Task<List<Store>> GetAllActivatedStoresAsync(PaginationFilter paginationFilter = null);
         Task<List<Store>> GetAllUnActivatedStoresAsync(PaginationFilter paginationFilter = null);
         Task<GenericResponse> GetStoreDetailsByIdAsync(Guid storeId);
+        Task<GenericResponse> ActivateStore(ActivateStoreRequest request);
     }
 }

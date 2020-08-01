@@ -31,6 +31,37 @@ namespace OK_OnBoarding.Services
             _jwtSettings = jwtSettings;
         }
 
+        public async Task<GenericResponse> ActivateStore(ActivateStoreRequest request)
+        {
+            var storeExist = await _dataContext.Stores.FirstOrDefaultAsync(s => s.Id == request.StoreId);
+            if (storeExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Store" };
+
+            var adminExist = await _dataContext.Admins.FirstOrDefaultAsync(a => a.AdminId == request.AdminId);
+            if (adminExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Admin" };
+
+            storeExist.IsActivated = request.Activate;
+            _dataContext.Entry(storeExist).State = EntityState.Modified;
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (updated <= 0)
+                return new GenericResponse { Status = false, Message = "Failed to activate Store" };
+
+            // Insert into AdminActivity Log {Hangfire}
+            await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { Action = request.Activate == false ? AdminActionsEnum.ADMIN_DEACTIVATE_ADMIN.ToString() : AdminActionsEnum.ADMIN_ACTIVATE_STORE.ToString(), StoreId = request.StoreId, ReasonOfAction = request.Reason, PerformerId = request.AdminId, DateOfAction = DateTime.Now });
+            await _dataContext.SaveChangesAsync();
+
+            return new GenericResponse { Status = true, Message = "Success" };
+        }
+
         public async Task<GenericResponse> ChangePassword(AdminChangePasswordRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.OldPassword) || string.IsNullOrWhiteSpace(request.NewPassword) || string.IsNullOrWhiteSpace(request.AdminId.ToString()))
@@ -216,9 +247,14 @@ namespace OK_OnBoarding.Services
             return allUnactivatedStores;
         }
 
-        public Task<GenericResponse> GetStoreDetailsByIdAsync(Guid storeId)
+        public async Task<GenericResponse> GetStoreDetailsByIdAsync(Guid storeId)
         {
-            throw new NotImplementedException();
+            var storeExist = await _dataContext.Stores.FirstOrDefaultAsync(s => s.Id == storeId);
+            if (storeExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid StoreId." };
+
+            var storedetails = await _dataContext.Stores.Include(s => s.StoresBankAccount).Include(s => s.StoresBusinessInformation).Where(s => s.Id == storeExist.Id).FirstOrDefaultAsync();
+            return new GenericResponse { Status = true, Message = "Success", Data = storedetails };
         }
 
         public async Task<AuthenticationResponse> LoginAdminAsync(string email, string password)

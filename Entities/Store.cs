@@ -26,5 +26,7 @@ namespace OK_OnBoarding.Entities
         public bool IsClosed { get; set; } = false;
 
         public StoreOwner StoreOwner { get; set; } //Owner of Store
+        public StoresBankAccount StoresBankAccount { get; set; }
+        public StoresBusinessInformation StoresBusinessInformation { get; set; }
     }
 }

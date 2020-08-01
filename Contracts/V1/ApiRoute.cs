@@ -20,6 +20,7 @@ namespace OK_OnBoarding.Contracts
             public const string GetAllActivatedStores = Base + "/admins/getactivatedstores";
             public const string GetStoreDetailsById = Base + "/admins/getstoredetailsbyid";
             public const string ChangePassword = Base + "/admins/changepassword";
+            public const string ActivateStore = Base + "/admins/activatestore";
         }
 
         public static class Customer
