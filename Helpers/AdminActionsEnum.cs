@@ -11,6 +11,7 @@ namespace OK_OnBoarding.Helpers
         ADMIN_CREATE_ADMIN = 2,
         ADMIN_DEACTIVATE_ADMIN = 3,
         ADMIN_DEACTIVATE_STORE = 4,
-        ADMIN_CHANGE_PASSWORD = 5
+        ADMIN_CHANGE_PASSWORD = 5,
+        ADMIN_ACTIVATE_STORE = 6
     }
 }

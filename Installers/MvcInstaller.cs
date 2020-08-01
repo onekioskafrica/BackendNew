@@ -29,6 +29,10 @@ namespace OK_OnBoarding.Installers
             configuration.Bind(nameof(termiiAuthSettings), termiiAuthSettings);
             services.AddSingleton(termiiAuthSettings);
 
+            var awsS3BucketOptions = new AwsS3BucketOptions();
+            configuration.Bind(nameof(awsS3BucketOptions), awsS3BucketOptions);
+            services.AddSingleton(awsS3BucketOptions);
+
             services.AddControllersWithViews();
 
             services.AddAuthentication(x => {

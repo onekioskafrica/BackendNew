@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OK_OnBoarding.Contracts.V1.Requests;
+using OK_OnBoarding.Contracts.V1.Requests.Queries;
 using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Data;
 using OK_OnBoarding.Domains;
@@ -28,6 +29,37 @@ namespace OK_OnBoarding.Services
             _dataContext = dataContext;
             _mapper = mapper;
             _jwtSettings = jwtSettings;
+        }
+
+        public async Task<GenericResponse> ActivateStore(ActivateStoreRequest request)
+        {
+            var storeExist = await _dataContext.Stores.FirstOrDefaultAsync(s => s.Id == request.StoreId);
+            if (storeExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Store" };
+
+            var adminExist = await _dataContext.Admins.FirstOrDefaultAsync(a => a.AdminId == request.AdminId);
+            if (adminExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Admin" };
+
+            storeExist.IsActivated = request.Activate;
+            _dataContext.Entry(storeExist).State = EntityState.Modified;
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (updated <= 0)
+                return new GenericResponse { Status = false, Message = "Failed to activate Store" };
+
+            // Insert into AdminActivity Log {Hangfire}
+            await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { Action = request.Activate == false ? AdminActionsEnum.ADMIN_DEACTIVATE_ADMIN.ToString() : AdminActionsEnum.ADMIN_ACTIVATE_STORE.ToString(), StoreId = request.StoreId, ReasonOfAction = request.Reason, PerformerId = request.AdminId, DateOfAction = DateTime.Now });
+            await _dataContext.SaveChangesAsync();
+
+            return new GenericResponse { Status = true, Message = "Success" };
         }
 
         public async Task<GenericResponse> ChangePassword(AdminChangePasswordRequest request)
@@ -163,8 +195,66 @@ namespace OK_OnBoarding.Services
             var userData = _mapper.Map<AdminUserDataResponse>(admin);
             response.Status = true;
             response.Message = "Success";
-            response.Body = userData;
+            response.Data = userData;
             return response;
+        }
+
+        public async Task<List<Store>> GetAllActivatedStoresAsync(PaginationFilter paginationFilter = null)
+        {
+            List<Store> allActivatedStores = null;
+            if(paginationFilter == null)
+            {
+                allActivatedStores = await _dataContext.Stores.Where(s => s.IsActivated == true).ToListAsync<Store>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allActivatedStores = await _dataContext.Stores.Skip(skip).Take(paginationFilter.PageSize).Where(s => s.IsActivated == true).ToListAsync();
+            }
+            
+            return allActivatedStores;
+        }
+
+        public async Task<List<Store>> GetAllStoresAsync(PaginationFilter paginationFilter = null)
+        {
+            List<Store> allStores = null;
+
+            if(paginationFilter == null)
+            {
+                allStores = await _dataContext.Stores.ToListAsync<Store>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allStores = await _dataContext.Stores.Skip(skip).Take(paginationFilter.PageSize).ToListAsync();
+            }
+
+            return allStores;
+        }
+
+        public async Task<List<Store>> GetAllUnActivatedStoresAsync(PaginationFilter paginationFilter = null)
+        {
+            List<Store> allUnactivatedStores = null;
+            if(paginationFilter == null)
+            {
+                allUnactivatedStores = await _dataContext.Stores.Where(s => s.IsActivated == false).ToListAsync<Store>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allUnactivatedStores = await _dataContext.Stores.Skip(skip).Take(paginationFilter.PageSize).Where(s => s.IsActivated == false).ToListAsync<Store>();
+            }
+            return allUnactivatedStores;
+        }
+
+        public async Task<GenericResponse> GetStoreDetailsByIdAsync(Guid storeId)
+        {
+            var storeExist = await _dataContext.Stores.FirstOrDefaultAsync(s => s.Id == storeId);
+            if (storeExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid StoreId." };
+
+            var storedetails = await _dataContext.Stores.Include(s => s.StoresBankAccount).Include(s => s.StoresBusinessInformation).Where(s => s.Id == storeExist.Id).FirstOrDefaultAsync();
+            return new GenericResponse { Status = true, Message = "Success", Data = storedetails };
         }
 
         public async Task<AuthenticationResponse> LoginAdminAsync(string email, string password)

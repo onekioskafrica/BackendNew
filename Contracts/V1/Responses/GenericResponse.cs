@@ -10,6 +10,6 @@ namespace OK_OnBoarding.Contracts.V1.Responses
         public string ResultCode { get; set; }
         public bool Status { get; set; } = false;
         public string Message { get; set; }
-        public object Body { get; set; }
+        public object Data { get; set; }
     }
 }

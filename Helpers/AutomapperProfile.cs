@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using OK_OnBoarding.Contracts.V1;
 using OK_OnBoarding.Contracts.V1.Requests;
+using OK_OnBoarding.Contracts.V1.Requests.Queries;
 using OK_OnBoarding.Contracts.V1.Responses;
+using OK_OnBoarding.Domains;
 using OK_OnBoarding.Entities;
 using System;
 using System.Collections.Generic;
@@ -24,6 +26,13 @@ namespace OK_OnBoarding.Helpers
             CreateMap<SuperAdmin, SuperAdminUserDataResponse>();
             CreateMap<CreateAdminRequest, Admin>();
             CreateMap<Admin, AdminUserDataResponse>();
+            CreateMap<CreateStoreBasicRequest, Store>();
+            CreateMap<CreateStoreBusinessInfoRequest, StoresBusinessInformation>();
+            CreateMap<CreateStoreBankAccountInformationRequest, StoresBankAccount>();
+            CreateMap<Store, StoreCreationDataResponse>();
+            CreateMap<StoresBusinessInformation, StoresBusinessInfoDataResponse>();
+            CreateMap<StoresBankAccount, StoresBankInformationDataResponse>();
+            CreateMap<PaginationQuery, PaginationFilter>();
         }
     }
 }
