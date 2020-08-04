@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace OK_OnBoarding.Entities
+namespace OK_OnBoarding.Contracts.V1.Responses
 {
-    public class Deliveryman
+    public class DeliverymanResponse
     {
         public Guid Id { get; set; }
         public string RiderId { get; set; }
@@ -16,8 +16,6 @@ namespace OK_OnBoarding.Entities
         public string PhoneNumber { get; set; }
         public string Gender { get; set; }
         public string ProfilePicUrl { get; set; }
-        public byte[] PasswordHash { get; set; }
-        public byte[] PasswordSalt { get; set; }
         public DateTime? DateOfBirth { get; set; }
         public string PhoneTypeUsed { get; set; }
         public bool InternetAccess { get; set; }

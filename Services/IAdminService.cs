@@ -20,5 +20,10 @@ namespace OK_OnBoarding.Services
         Task<List<Store>> GetAllUnActivatedStoresAsync(PaginationFilter paginationFilter = null);
         Task<GenericResponse> GetStoreDetailsByIdAsync(Guid storeId);
         Task<GenericResponse> ActivateStore(ActivateStoreRequest request);
+        Task<List<DeliverymanResponse>> GetAllDeliverymenAsync(PaginationFilter paginationFilter = null);
+        Task<List<DeliverymanResponse>> GetAllActivatedDeliverymenAsync(PaginationFilter paginationFilter = null);
+        Task<List<DeliverymanResponse>> GetAllUnActivatedDeliverymenAsync(PaginationFilter paginationFilter = null);
+        Task<GenericResponse> GetDeliverymanDetailsByIdAsync(Guid deliverymanId);
+        Task<GenericResponse> ActivateDeliveryman(ActivateDeliverymanRequest request);
     }
 }

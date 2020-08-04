@@ -33,6 +33,9 @@ namespace OK_OnBoarding.Helpers
             CreateMap<StoresBusinessInformation, StoresBusinessInfoDataResponse>();
             CreateMap<StoresBankAccount, StoresBankInformationDataResponse>();
             CreateMap<PaginationQuery, PaginationFilter>();
+            CreateMap<DeliverymanGeneralInfoRequest, Deliveryman>();
+            CreateMap<UpdateAddressRequest, Deliveryman>();
+            CreateMap<Deliveryman, DeliverymanResponse>();
         }
     }
 }

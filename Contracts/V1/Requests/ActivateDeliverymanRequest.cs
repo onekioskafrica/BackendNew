@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace OK_OnBoarding.Contracts.V1.Requests
 {
-    public class ActivateStoreRequest
+    public class ActivateDeliverymanRequest
     {
         [Required]
         public Guid AdminId { get; set; }
 
         [Required]
-        public Guid StoreId { get; set; }
+        public Guid DeliverymanId { get; set; }
 
         [Required]
         public bool Activate { get; set; }

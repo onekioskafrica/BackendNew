@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using OK_OnBoarding.Contracts.V1.Requests;
 using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Data;
 using OK_OnBoarding.Domains;
@@ -27,8 +28,10 @@ namespace OK_OnBoarding.Services
         private readonly IMapper _mapper;
         private readonly TermiiAuthSettings _termiiAuthSettings;
         private readonly AppSettings _appSettings;
+        private readonly IAwsS3UploadService _s3UploadService;
+        private readonly AwsS3BucketOptions _s3BucketOptions;
 
-        public DeliverymanService(DataContext dataContext, JwtSettings jwtSettings, IFacebookAuthService facebookAuthService, IOTPService otpService, IMapper mapper, TermiiAuthSettings termiiAuthSettings, AppSettings appSettings)
+        public DeliverymanService(DataContext dataContext, JwtSettings jwtSettings, IFacebookAuthService facebookAuthService, IOTPService otpService, IMapper mapper, TermiiAuthSettings termiiAuthSettings, AppSettings appSettings, IAwsS3UploadService s3UploadService, AwsS3BucketOptions s3BucketOptions)
         {
             _dataContext = dataContext;
             _jwtSettings = jwtSettings;
@@ -37,6 +40,8 @@ namespace OK_OnBoarding.Services
             _mapper = mapper;
             _termiiAuthSettings = termiiAuthSettings;
             _appSettings = appSettings;
+            _s3UploadService = s3UploadService;
+            _s3BucketOptions = s3BucketOptions;
         }
 
         public async Task<AuthenticationResponse> CreateDeliverymanAsync(Deliveryman deliveryman, string password)
@@ -233,6 +238,124 @@ namespace OK_OnBoarding.Services
 
             var token = GenerateAuthenticationTokenForDeliveryman(deliveryman);
             return new AuthenticationResponse { Success = true, Token = token, Data = userData };
+        }
+
+        public async Task<GenericResponse> UpdateAddressAsync(UpdateAddressRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.PerformerId.ToString()) || string.IsNullOrWhiteSpace(request.Country) || string.IsNullOrWhiteSpace(request.State) || string.IsNullOrWhiteSpace(request.City) || string.IsNullOrWhiteSpace(request.Line1))
+                return new GenericResponse { Status = false, Message = "PerformerId, Country, State, City or Home Address cannot be empty. " };
+
+            var deliverymanExist = await _dataContext.DeliveryMen.FirstOrDefaultAsync(d => d.Id == request.PerformerId);
+            if (deliverymanExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Deliveryman. " };
+
+            deliverymanExist.Country = request.Country;
+            deliverymanExist.State = request.State;
+            deliverymanExist.City = request.City;
+            deliverymanExist.Line1 = request.Line1;
+
+            _dataContext.Entry(deliverymanExist).State = EntityState.Modified;
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (updated <= 0)
+                return new GenericResponse { Status = false, Message = "Couldn't add address details." };
+
+            return new GenericResponse { Status = true, Message = "Address Updated Successfully." };
+        }
+
+        public async Task<GenericResponse> UpdateGeneralInformationAsync(DeliverymanGeneralInfoRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.DeliverymanId.ToString()) || string.IsNullOrWhiteSpace(request.MeansOfTransport))
+                return new GenericResponse { Status = false, Message = "Deliveryman Id, Means of Transport cannot be empty." };
+
+            if (!request.IsCompanyDriver && (string.IsNullOrWhiteSpace(request.Bank) || string.IsNullOrWhiteSpace(request.AccountName) || string.IsNullOrWhiteSpace(request.AccountNumber)))
+                return new GenericResponse { Status = false, Message = "Bank, Account Name, Account Number cannot be empty when you are not a company driver." };
+
+            var deliverymanExist = await _dataContext.DeliveryMen.FirstOrDefaultAsync(d => d.Id == request.DeliverymanId);
+            if (deliverymanExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Deliveryman Id." };
+
+            if (!deliverymanExist.IsVerified)
+                return new GenericResponse { Status = false, Message = "Deliveryman not verified." };
+
+            deliverymanExist.DateOfBirth = request.DateOfBirth;
+            deliverymanExist.PhoneTypeUsed = request.PhoneTypeUsed;
+            deliverymanExist.InternetAccess = request.InternetAccess;
+            deliverymanExist.MeansOfTransport = request.MeansOfTransport;
+            deliverymanExist.Bank = request.Bank;
+            deliverymanExist.AccountNumber = request.AccountNumber;
+            deliverymanExist.AccountName = request.AccountName;
+            deliverymanExist.IsCompanyDriver = request.IsCompanyDriver;
+
+            _dataContext.Entry(deliverymanExist).State = EntityState.Modified;
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error occurred." };
+            }
+            if (updated <= 0)
+                return new GenericResponse { Status = false, Message = "Failed to updated information." };
+
+            return new GenericResponse { Status = true, Message = "Successfully updated." };
+        }
+
+        public async Task<GenericResponse> UploadDocumentsAsync(DeliverymanUploadDocumentsRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.DeliverymanId.ToString()))
+                return new GenericResponse { Status = false, Message = "Deliveryman ID cannot be empty." };
+            var deliverymanExist = await _dataContext.DeliveryMen.FirstOrDefaultAsync(d => d.Id == request.DeliverymanId);
+            if (deliverymanExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Deliveryman Id." };
+
+            if (!deliverymanExist.IsVerified)
+                return new GenericResponse { Status = false, Message = "Deliveryman not verified." };
+
+            string passportUrl = string.Empty;
+            string governmentIssuedIdFrontUrl = string.Empty;
+            string governmentIssuedIdBackUrl = string.Empty;
+            string utilityBillUrl = string.Empty;
+
+            if (request.PassportPhoto == null || request.GovernmentIssuedIdFront == null || request.GovernmentIssuedIdBack == null || request.UtilityBill == null)
+                return new GenericResponse { Status = false, Message = "Provide Passport photo, Government Issued ID front and back, and Utility Bill." };
+
+            passportUrl = await _s3UploadService.UploadFileAsync(request.PassportPhoto.OpenReadStream(), request.GovernmentIssuedIdFront.FileName, _s3BucketOptions.CredentialsFolderName);
+
+            governmentIssuedIdFrontUrl = await _s3UploadService.UploadFileAsync(request.GovernmentIssuedIdFront.OpenReadStream(), request.GovernmentIssuedIdFront.FileName, _s3BucketOptions.CredentialsFolderName);
+
+            governmentIssuedIdBackUrl = await _s3UploadService.UploadFileAsync(request.GovernmentIssuedIdBack.OpenReadStream(), request.GovernmentIssuedIdBack.FileName, _s3BucketOptions.CredentialsFolderName);
+
+            utilityBillUrl = await _s3UploadService.UploadFileAsync(request.UtilityBill.OpenReadStream(), request.UtilityBill.FileName, _s3BucketOptions.CredentialsFolderName);
+
+            deliverymanExist.PassportUrl = passportUrl;
+            deliverymanExist.GovernmentIssuedIDFront = governmentIssuedIdFrontUrl;
+            deliverymanExist.GovernmentIssuedIDBack = governmentIssuedIdBackUrl;
+            deliverymanExist.UtilityBillUrl = utilityBillUrl;
+
+            _dataContext.Entry(deliverymanExist).State = EntityState.Modified;
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (updated <= 0)
+                return new GenericResponse { Status = false, Message = "Failed to update document information." };
+
+            return new GenericResponse { Status = true, Message = "Success" };
         }
 
         private string GenerateAuthenticationTokenForDeliveryman(Deliveryman deliveryman)
