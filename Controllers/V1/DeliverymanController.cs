@@ -103,5 +103,55 @@ namespace OK_OnBoarding.Controllers.V1
             return Ok(genericResponse);
 
         }
+
+        [HttpPut(ApiRoute.Deliveryman.UpdateAddress)]
+        public async Task<IActionResult> UpdateAddress([FromBody] UpdateAddressRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+            var genericResponse = await _delivermanService.UpdateAddressAsync(request);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [HttpPut(ApiRoute.Deliveryman.UpdateGeneralInformation)]
+        public async Task<IActionResult> UpdateGeneralInformation([FromBody] DeliverymanGeneralInfoRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+
+            var genericResponse = await _delivermanService.UpdateGeneralInformationAsync(request);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [HttpPut(ApiRoute.Deliveryman.UploadDoc)]
+        public async Task<IActionResult> UploadDoc([FromForm] DeliverymanUploadDocumentsRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+
+            var genericResponse = await _delivermanService.UploadDocumentsAsync(request);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
     }
 }

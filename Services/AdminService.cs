@@ -31,6 +31,37 @@ namespace OK_OnBoarding.Services
             _jwtSettings = jwtSettings;
         }
 
+        public async Task<GenericResponse> ActivateDeliveryman(ActivateDeliverymanRequest request)
+        {
+            var deliverymanExist = await _dataContext.DeliveryMen.FirstOrDefaultAsync(d => d.Id == request.DeliverymanId);
+            if (deliverymanExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Deliveryman Id" };
+
+            var adminExist = await _dataContext.Admins.FirstOrDefaultAsync(a => a.AdminId == request.AdminId);
+            if (adminExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Admin" };
+
+            deliverymanExist.IsActive = request.Activate;
+            _dataContext.Entry(deliverymanExist).State = EntityState.Modified;
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (updated <= 0)
+                return new GenericResponse { Status = false, Message = "Failed to activate Deliveryman" };
+
+            // Insert into AdminActivity Log {Hangfire}
+            await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { Action = request.Activate == false ? AdminActionsEnum.ADMIN_DEACTIVATE_DELIVERYMAN.ToString() : AdminActionsEnum.ADMIN_ACTIVATE_DELIVERYMAN.ToString(), DeliverymanId = request.DeliverymanId, ReasonOfAction = request.Reason, PerformerId = request.AdminId, DateOfAction = DateTime.Now });
+            await _dataContext.SaveChangesAsync();
+
+            return new GenericResponse { Status = true, Message = "Success" };
+        }
+
         public async Task<GenericResponse> ActivateStore(ActivateStoreRequest request)
         {
             var storeExist = await _dataContext.Stores.FirstOrDefaultAsync(s => s.Id == request.StoreId);
@@ -56,7 +87,7 @@ namespace OK_OnBoarding.Services
                 return new GenericResponse { Status = false, Message = "Failed to activate Store" };
 
             // Insert into AdminActivity Log {Hangfire}
-            await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { Action = request.Activate == false ? AdminActionsEnum.ADMIN_DEACTIVATE_ADMIN.ToString() : AdminActionsEnum.ADMIN_ACTIVATE_STORE.ToString(), StoreId = request.StoreId, ReasonOfAction = request.Reason, PerformerId = request.AdminId, DateOfAction = DateTime.Now });
+            await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { Action = request.Activate == false ? AdminActionsEnum.ADMIN_DEACTIVATE_STORE.ToString() : AdminActionsEnum.ADMIN_ACTIVATE_STORE.ToString(), StoreId = request.StoreId, ReasonOfAction = request.Reason, PerformerId = request.AdminId, DateOfAction = DateTime.Now });
             await _dataContext.SaveChangesAsync();
 
             return new GenericResponse { Status = true, Message = "Success" };
@@ -116,7 +147,7 @@ namespace OK_OnBoarding.Services
 
             //Send mail to Admin
 
-            //Add this action to AdminActivityLog
+            //Add this action to AdminActivityLog {Hangfire}
             await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { Action = AdminActionsEnum.ADMIN_CHANGE_PASSWORD.ToString(), PerformerId = adminExist.AdminId, DateOfAction = DateTime.Now });
             try
             {
@@ -181,7 +212,7 @@ namespace OK_OnBoarding.Services
 
             //Send Mail to Admin
 
-            //Log Admin Activity
+            //Log Admin Activity {Hangfire}
             await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { PerformerId = callerId, Action = AdminActionsEnum.ADMIN_CREATE_ADMIN.ToString(), AdminId = admin.AdminId, DateOfAction = DateTime.Now });
             try
             {
@@ -199,6 +230,22 @@ namespace OK_OnBoarding.Services
             return response;
         }
 
+        public async Task<List<DeliverymanResponse>> GetAllActivatedDeliverymenAsync(PaginationFilter paginationFilter = null)
+        {
+            List<Deliveryman> allActivatedDeliverymen = null;
+            if(paginationFilter == null)
+            {
+                allActivatedDeliverymen = await _dataContext.DeliveryMen.Where(d => d.IsActive == true).ToListAsync<Deliveryman>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allActivatedDeliverymen = await _dataContext.DeliveryMen.Skip(skip).Take(paginationFilter.PageSize).Where(d => d.IsActive == true).ToListAsync<Deliveryman>();
+            }
+            var allDeliverymenResponse = _mapper.Map<List<DeliverymanResponse>>(allActivatedDeliverymen);
+            return allDeliverymenResponse;
+        }
+
         public async Task<List<Store>> GetAllActivatedStoresAsync(PaginationFilter paginationFilter = null)
         {
             List<Store> allActivatedStores = null;
@@ -213,6 +260,23 @@ namespace OK_OnBoarding.Services
             }
             
             return allActivatedStores;
+        }
+
+        public async Task<List<DeliverymanResponse>> GetAllDeliverymenAsync(PaginationFilter paginationFilter = null)
+        {
+            List<Deliveryman> allDeliverymen = null;
+
+            if (paginationFilter == null)
+            {
+                allDeliverymen = await _dataContext.DeliveryMen.ToListAsync<Deliveryman>();
+            }
+            else 
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allDeliverymen = await _dataContext.DeliveryMen.Skip(skip).Take(paginationFilter.PageSize).ToListAsync();
+            }
+            var allDeliverymenResponse = _mapper.Map<List<DeliverymanResponse>>(allDeliverymen);
+            return allDeliverymenResponse;
         }
 
         public async Task<List<Store>> GetAllStoresAsync(PaginationFilter paginationFilter = null)
@@ -232,6 +296,22 @@ namespace OK_OnBoarding.Services
             return allStores;
         }
 
+        public async Task<List<DeliverymanResponse>> GetAllUnActivatedDeliverymenAsync(PaginationFilter paginationFilter = null)
+        {
+            List<Deliveryman> allUnactivatedDeliveryMen = null;
+            if(paginationFilter == null)
+            {
+                allUnactivatedDeliveryMen = await _dataContext.DeliveryMen.Where(d => d.IsActive == false).ToListAsync<Deliveryman>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allUnactivatedDeliveryMen = await _dataContext.DeliveryMen.Skip(skip).Take(paginationFilter.PageSize).Where(d => d.IsActive == false).ToListAsync<Deliveryman>();
+            }
+            var allDeliverymenResponse = _mapper.Map<List<DeliverymanResponse>>(allUnactivatedDeliveryMen);
+            return allDeliverymenResponse;
+        }
+
         public async Task<List<Store>> GetAllUnActivatedStoresAsync(PaginationFilter paginationFilter = null)
         {
             List<Store> allUnactivatedStores = null;
@@ -247,13 +327,26 @@ namespace OK_OnBoarding.Services
             return allUnactivatedStores;
         }
 
+        public async Task<GenericResponse> GetDeliverymanDetailsByIdAsync(Guid deliverymanId)
+        {
+            var deliverymanExist = await _dataContext.DeliveryMen.FirstOrDefaultAsync(d => d.Id == deliverymanId);
+
+            if (deliverymanExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Deliveryman Id" };
+
+            var deliverymanResponse = _mapper.Map<DeliverymanResponse>(deliverymanExist);
+
+            return new GenericResponse { Status = true, Data = deliverymanResponse };
+        }
+
         public async Task<GenericResponse> GetStoreDetailsByIdAsync(Guid storeId)
         {
-            var storeExist = await _dataContext.Stores.FirstOrDefaultAsync(s => s.Id == storeId);
-            if (storeExist == null)
+            
+            var storedetails = await _dataContext.Stores.Include(s => s.StoresBankAccount).Include(s => s.StoresBusinessInformation).Where(s => s.Id == storeId).FirstOrDefaultAsync();
+
+            if (storedetails == null)
                 return new GenericResponse { Status = false, Message = "Invalid StoreId." };
 
-            var storedetails = await _dataContext.Stores.Include(s => s.StoresBankAccount).Include(s => s.StoresBusinessInformation).Where(s => s.Id == storeExist.Id).FirstOrDefaultAsync();
             return new GenericResponse { Status = true, Message = "Success", Data = storedetails };
         }
 
@@ -284,8 +377,8 @@ namespace OK_OnBoarding.Services
             if (updated <= 0)
                 return new AuthenticationResponse { Errors = new[] { "Failed to signin." } };
 
-            // Add activity to admin log
-            await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { Action =  AdminActionsEnum.LOGIN.ToString(), DateOfAction = DateTime.Now } );
+            // Add activity to admin log {Hangfire}
+            await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { Action =  AdminActionsEnum.LOGIN.ToString(), DateOfAction = DateTime.Now, PerformerId = admin.AdminId } );
             try
             {
                 await _dataContext.SaveChangesAsync();

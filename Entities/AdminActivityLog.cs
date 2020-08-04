@@ -15,6 +15,9 @@ namespace OK_OnBoarding.Entities
         public Guid PerformerId { get; set; }
 
         public Guid? AdminId { get; set; }
+
+        [ForeignKey("Deliveryman")]
+        public Guid? DeliverymanId { get; set; }
         public string Action { get; set; }
         public DateTime? DateOfAction { get; set; }
         public string ReasonOfAction { get; set; }
@@ -24,5 +27,6 @@ namespace OK_OnBoarding.Entities
 
         public Admin Admin { get; set; }
         public Store Store { get; set; }
+        public Deliveryman Deliveryman { get; set; }
     }
 }

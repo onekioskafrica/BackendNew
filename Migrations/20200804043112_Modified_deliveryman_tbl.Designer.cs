@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OK_OnBoarding.Data;
 
 namespace OK_OnBoarding.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20200804043112_Modified_deliveryman_tbl")]
+    partial class Modified_deliveryman_tbl
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -279,9 +281,6 @@ namespace OK_OnBoarding.Migrations
                     b.Property<DateTime?>("DateOfAction")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("DeliverymanId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid>("PerformerId")
                         .HasColumnType("uniqueidentifier");
 
@@ -296,8 +295,6 @@ namespace OK_OnBoarding.Migrations
                     b.HasIndex("AdminId");
 
                     b.HasIndex("DateOfAction");
-
-                    b.HasIndex("DeliverymanId");
 
                     b.HasIndex("StoreId");
 
@@ -1805,10 +1802,6 @@ namespace OK_OnBoarding.Migrations
                     b.HasOne("OK_OnBoarding.Entities.Admin", "Admin")
                         .WithMany("AdminActivityLogs")
                         .HasForeignKey("AdminId");
-
-                    b.HasOne("OK_OnBoarding.Entities.Deliveryman", "Deliveryman")
-                        .WithMany()
-                        .HasForeignKey("DeliverymanId");
 
                     b.HasOne("OK_OnBoarding.Entities.Store", "Store")
                         .WithMany()

@@ -21,6 +21,11 @@ namespace OK_OnBoarding.Contracts
             public const string GetStoreDetailsById = Base + "/admins/getstoredetailsbyid";
             public const string ChangePassword = Base + "/admins/changepassword";
             public const string ActivateStore = Base + "/admins/activatestore";
+            public const string GetAllDeliverymen = Base + "/admins/getalldeliverymen";
+            public const string GetAllUnActivatedDeliveryman = Base + "/admins/getunactivateddeliverymen";
+            public const string GetAllActivatedDeliveryman = Base + "/admins/getactivateddeliverymen";
+            public const string GetDeliverymanDetailsById = Base + "/admins/getdeliverymandetailsbyid";
+            public const string ActivateDeliveryman = Base + "/admins/activatedeliveryman";
         }
 
         public static class Customer
@@ -49,6 +54,10 @@ namespace OK_OnBoarding.Contracts
             public const string FacebookAuth = Base + "/deliverymen/auth/fbauth";
             public const string GoogleAuth = Base + "/deliverymen/auth/googleauth";
             public const string EnableDeliverymanCreation = Base + "/deliverymen/enabledeliverymancreation";
+            public const string UpdateAddress = Base + "/deliverymen/updateaddress";
+            public const string UpdateGeneralInformation = Base + "/deliverymen/updategeneralinformation";
+            public const string UploadDoc = Base + "/deliverymen/uploaddocuments";
+            public const string AddCompanyDetails = Base + "/deliverymen/addcompanydetails";
         }
 
         public static class SuperAdmin

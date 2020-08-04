@@ -129,6 +129,88 @@ namespace OK_OnBoarding.Controllers.V1
         }
 
         [Authorize(Roles = Roles.Admin)]
+        [HttpGet(ApiRoute.Admin.GetAllDeliverymen)]
+        public async Task<IActionResult> GetAllDeliverymen([FromQuery] PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+
+            var allDeliverymen = await _adminService.GetAllDeliverymenAsync(pagination);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<DeliverymanResponse>(allDeliverymen));
+
+            var paginationResponse = new PagedResponse<DeliverymanResponse>
+            {
+                Data = allDeliverymen,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
+            };
+            return Ok(paginationResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpGet(ApiRoute.Admin.GetAllUnActivatedDeliveryman)]
+        public async Task<IActionResult> GetAllUnActivatedDeliveryman([FromQuery] PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+
+            var allUnactivatedDeliverymen = await _adminService.GetAllUnActivatedDeliverymenAsync(pagination);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<DeliverymanResponse>(allUnactivatedDeliverymen));
+
+            var paginationResponse = new PagedResponse<DeliverymanResponse>
+            {
+                Data = allUnactivatedDeliverymen,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
+            };
+            return Ok(paginationResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpGet(ApiRoute.Admin.GetAllActivatedDeliveryman)]
+        public async Task<IActionResult> GetAllActivatedDeliveryman([FromQuery] PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+
+            var allActivatedDeliverymen = await _adminService.GetAllActivatedDeliverymenAsync(pagination);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<DeliverymanResponse>(allActivatedDeliverymen));
+
+            var paginationResponse = new PagedResponse<DeliverymanResponse>
+            {
+                Data = allActivatedDeliverymen,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
+            };
+            return Ok(paginationResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpGet(ApiRoute.Admin.GetDeliverymanDetailsById)]
+        public async Task<IActionResult> GetDeliverymanDetailsById([FromQuery] Guid deliverymanId)
+        {
+            var genericResponse = await _adminService.GetDeliverymanDetailsByIdAsync(deliverymanId);
+
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpPut(ApiRoute.Admin.ActivateDeliveryman)]
+        public async Task<IActionResult> ActivateDeliveryman([FromBody] ActivateDeliverymanRequest request)
+        {
+            var genericResponse = await _adminService.ActivateDeliveryman(request);
+
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
         [HttpPost(ApiRoute.Admin.CreateAdmin)]
         public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminRequest model)
         {
