@@ -30,6 +30,10 @@ namespace OK_OnBoarding
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors(c =>
+            {
+                c.AddPolicy("AllowOrigin", options => options.AllowAnyOrigin());
+            });
             services.InstallServicesInAssembly(Configuration);
             services.AddAutoMapper(typeof(Startup));
             services.AddControllersWithViews();
@@ -56,6 +60,7 @@ namespace OK_OnBoarding
             }
 
             //app.UseHttpsRedirection();
+            app.UseCors(options => options.AllowAnyOrigin());
             app.UseStaticFiles();
 
             app.UseAuthentication();

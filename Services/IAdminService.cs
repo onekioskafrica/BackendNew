@@ -25,5 +25,8 @@ namespace OK_OnBoarding.Services
         Task<List<DeliverymanResponse>> GetAllUnActivatedDeliverymenAsync(PaginationFilter paginationFilter = null);
         Task<GenericResponse> GetDeliverymanDetailsByIdAsync(Guid deliverymanId);
         Task<GenericResponse> ActivateDeliveryman(ActivateDeliverymanRequest request);
+        Task<List<AdminResponse>> GetAllAdminsAsync(PaginationFilter paginationFilter = null);
+        Task<GenericResponse> GetAdminDetailsByIdAsync(Guid AdminId);
+        Task<GenericResponse> ActivateAdminAsync(ActivateAdminRequest request);
     }
 }
