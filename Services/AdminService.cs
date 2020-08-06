@@ -31,6 +31,43 @@ namespace OK_OnBoarding.Services
             _jwtSettings = jwtSettings;
         }
 
+        public async Task<GenericResponse> ActivateAdminAsync(ActivateAdminRequest request)
+        {
+            var callerExist = await _dataContext.Admins.AsNoTracking().FirstOrDefaultAsync(a => a.AdminId == request.PerformerId);
+            if (callerExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Caller Id" };
+            if (!callerExist.IsActive)
+                return new GenericResponse { Status = false, Message = "Caller is not active" };
+            
+
+            var adminExist = await _dataContext.Admins.FirstOrDefaultAsync(a => a.AdminId == request.AdminId);
+            if (adminExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Admin Id" };
+
+            if (callerExist.AdminId == adminExist.AdminId)
+                return new GenericResponse { Status = false, Message = "Cannot activate yourself." };
+
+            adminExist.IsActive = request.Activate;
+            _dataContext.Entry(adminExist).State = EntityState.Modified;
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (updated <= 0)
+                return new GenericResponse { Status = false, Message = "Failed to activate Deliveryman" };
+
+            // Insert into AdminActivity Log {Hangfire}
+            await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { Action = request.Activate == false ? AdminActionsEnum.ADMIN_DEACTIVATE_ADMIN.ToString() : AdminActionsEnum.ADMIN_ACTIVATE_ADMIN.ToString(), AdminId = request.AdminId, ReasonOfAction = request.Reason, PerformerId = request.PerformerId, DateOfAction = DateTime.Now });
+            await _dataContext.SaveChangesAsync();
+
+            return new GenericResponse { Status = true, Message = "Success" };
+        }
+
         public async Task<GenericResponse> ActivateDeliveryman(ActivateDeliverymanRequest request)
         {
             var deliverymanExist = await _dataContext.DeliveryMen.FirstOrDefaultAsync(d => d.Id == request.DeliverymanId);
@@ -229,6 +266,17 @@ namespace OK_OnBoarding.Services
             response.Data = userData;
             return response;
         }
+        public async Task<GenericResponse> GetAdminDetailsByIdAsync(Guid AdminId)
+        {
+            var adminExist = await _dataContext.Admins.FirstOrDefaultAsync(a => a.AdminId == AdminId);
+
+            if (adminExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Admin Id" };
+
+            var adminResponse = _mapper.Map<AdminResponse>(adminExist);
+
+            return new GenericResponse { Status = true, Data = adminResponse };
+        }
 
         public async Task<List<DeliverymanResponse>> GetAllActivatedDeliverymenAsync(PaginationFilter paginationFilter = null)
         {
@@ -260,6 +308,22 @@ namespace OK_OnBoarding.Services
             }
             
             return allActivatedStores;
+        }
+
+        public async Task<List<AdminResponse>> GetAllAdminsAsync(PaginationFilter paginationFilter = null)
+        {
+            List<Admin> allAdmins = null;
+            if (paginationFilter == null)
+            {
+                allAdmins = await _dataContext.Admins.ToListAsync<Admin>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allAdmins = await _dataContext.Admins.Skip(skip).Take(paginationFilter.PageSize).ToListAsync();
+            }
+            var allAdminResponse = _mapper.Map<List<AdminResponse>>(allAdmins);
+            return allAdminResponse;
         }
 
         public async Task<List<DeliverymanResponse>> GetAllDeliverymenAsync(PaginationFilter paginationFilter = null)

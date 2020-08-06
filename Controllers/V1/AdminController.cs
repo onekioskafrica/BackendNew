@@ -211,6 +211,48 @@ namespace OK_OnBoarding.Controllers.V1
         }
 
         [Authorize(Roles = Roles.Admin)]
+        [HttpGet(ApiRoute.Admin.GetAllAdmins)]
+        public async Task<IActionResult> GetAllAdmins([FromQuery] PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+            var allAdmins = await _adminService.GetAllAdminsAsync(pagination);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<AdminResponse>(allAdmins));
+
+            var paginationResponse = new PagedResponse<AdminResponse>
+            {
+                Data = allAdmins,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
+            };
+            return Ok(paginationResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpGet(ApiRoute.Admin.GetAdminDetailsById)]
+        public async Task<IActionResult> GetAdminDetailsById([FromQuery] Guid adminId)
+        {
+            var genericResponse = await _adminService.GetAdminDetailsByIdAsync(adminId);
+
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpPut(ApiRoute.Admin.ActivateAdmin)]
+        public async Task<IActionResult> ActivateAdmin([FromBody] ActivateAdminRequest request)
+        {
+            var genericResponse = await _adminService.ActivateAdminAsync(request);
+
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+
+        [Authorize(Roles = Roles.Admin)]
         [HttpPost(ApiRoute.Admin.CreateAdmin)]
         public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminRequest model)
         {

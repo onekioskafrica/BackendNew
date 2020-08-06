@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using OK_OnBoarding.Contracts.V1;
+using OK_OnBoarding.Contracts.V1.Requests;
 using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Data;
 using OK_OnBoarding.Domains;
@@ -230,6 +231,38 @@ namespace OK_OnBoarding.Services
 
             var token = GenerateAuthenticationTokenForCustomer(customer);
             return new AuthenticationResponse { Success = true, Token = token, Data = userData };
+        }
+
+        public async Task<GenericResponse> UpdateAddressAsync(UpdateAddressRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.PerformerId.ToString()) || string.IsNullOrWhiteSpace(request.Country) || string.IsNullOrWhiteSpace(request.State) || string.IsNullOrWhiteSpace(request.City) || string.IsNullOrWhiteSpace(request.Line1))
+                return new GenericResponse { Status = false, Message = "PerformerId, Country, State, City or Home Address cannot be empty. " };
+
+            var customerExist = await _dataContext.Customers.FirstOrDefaultAsync(c => c.CustomerId == request.PerformerId);
+            if (customerExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid CustomerId. " };
+            if (!customerExist.IsVerified)
+                return new GenericResponse { Status = false, Message = "Customer is unverified." };
+
+            customerExist.Country = request.Country;
+            customerExist.State = request.State;
+            customerExist.City = request.City;
+            customerExist.Line1 = request.Line1;
+
+            _dataContext.Entry(customerExist).State = EntityState.Modified;
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (updated <= 0)
+                return new GenericResponse { Status = false, Message = "Couldn't add address details." };
+
+            return new GenericResponse { Status = true, Message = "Address Updated Successfully." };
         }
 
         private string GenerateAuthenticationTokenForCustomer(Customer customer)

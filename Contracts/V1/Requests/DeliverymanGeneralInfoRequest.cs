@@ -15,6 +15,8 @@ namespace OK_OnBoarding.Contracts.V1.Requests
         [Required]
         public DateTime DateOfBirth { get; set; }
 
+        public string Gender { get; set; }
+
         [Required]
         public string PhoneTypeUsed { get; set; }
 

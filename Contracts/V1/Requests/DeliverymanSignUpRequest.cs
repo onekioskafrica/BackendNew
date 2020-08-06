@@ -26,10 +26,6 @@ namespace OK_OnBoarding.Contracts.V1.Requests
         [StringLength(16, ErrorMessage = "Minimum length of characters should be 11 and maximum of 16 characters.", MinimumLength = 11)]
         public string PhoneNumber { get; set; }
 
-        public string Gender { get; set; }
-
-        public DateTime? DateOfBirth { get; set; }
-
         [Required]
         [DataType(DataType.Password)]
         [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$", ErrorMessage = "Password must meet minimum complexity requirements")]
