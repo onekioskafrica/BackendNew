@@ -78,9 +78,6 @@ namespace OK_OnBoarding.Services
             if (adminExist == null)
                 return new GenericResponse { Status = false, Message = "Invalid Admin" };
 
-            if(!adminExist.IsActive)
-                return new GenericResponse { Status = false, Message = "Inactive admin" };
-
             deliverymanExist.IsActive = request.Activate;
             _dataContext.Entry(deliverymanExist).State = EntityState.Modified;
             var updated = 0;
@@ -111,8 +108,6 @@ namespace OK_OnBoarding.Services
             var adminExist = await _dataContext.Admins.FirstOrDefaultAsync(a => a.AdminId == request.AdminId);
             if (adminExist == null)
                 return new GenericResponse { Status = false, Message = "Invalid Admin" };
-            if (!adminExist.IsActive)
-                return new GenericResponse { Status = false, Message = "Inactive admin" };
 
             storeExist.IsActivated = request.Activate;
             _dataContext.Entry(storeExist).State = EntityState.Modified;
@@ -210,12 +205,6 @@ namespace OK_OnBoarding.Services
             if (string.IsNullOrWhiteSpace(admin.FirstName) || string.IsNullOrWhiteSpace(admin.LastName) || string.IsNullOrWhiteSpace(admin.Email))
                 return new GenericResponse { Status = false, Message = "FirstName, LastName and Email cannot be empty" };
 
-            var callerAdmin = await _dataContext.Admins.FirstOrDefaultAsync(a => a.AdminId == callerId);
-            if (callerAdmin == null)
-                return new GenericResponse { Status = false, Message = "Invalid Admin Id." };
-            if (!callerAdmin.IsActive)
-                return new GenericResponse { Status = false, Message = "Inactive admin" };
-
             var adminExist = await _dataContext.Admins.FirstOrDefaultAsync(a => a.Email == admin.Email || a.PhoneNumber == admin.PhoneNumber);
 
             if (adminExist != null)
@@ -278,18 +267,6 @@ namespace OK_OnBoarding.Services
             return response;
         }
 
-        public async Task<GenericResponse> GetAdminDetailsByIdAsync(Guid AdminId)
-        {
-            var adminExist = await _dataContext.Admins.FirstOrDefaultAsync(a => a.AdminId == AdminId);
-
-            if (adminExist == null)
-                return new GenericResponse { Status = false, Message = "Invalid Admin Id" };
-
-            var adminResponse = _mapper.Map<AdminResponse>(adminExist);
-
-            return new GenericResponse { Status = true, Data = adminResponse };
-        }
-
         public async Task<List<DeliverymanResponse>> GetAllActivatedDeliverymenAsync(PaginationFilter paginationFilter = null)
         {
             List<Deliveryman> allActivatedDeliverymen = null;
@@ -320,22 +297,6 @@ namespace OK_OnBoarding.Services
             }
             
             return allActivatedStores;
-        }
-
-        public async Task<List<AdminResponse>> GetAllAdminsAsync(PaginationFilter paginationFilter = null)
-        {
-            List<Admin> allAdmins = null;
-            if (paginationFilter == null)
-            {
-                allAdmins = await _dataContext.Admins.ToListAsync<Admin>();
-            }
-            else
-            {
-                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
-                allAdmins = await _dataContext.Admins.Skip(skip).Take(paginationFilter.PageSize).ToListAsync();
-            }
-            var allAdminResponse = _mapper.Map<List<AdminResponse>>(allAdmins);
-            return allAdminResponse;
         }
 
         public async Task<List<DeliverymanResponse>> GetAllDeliverymenAsync(PaginationFilter paginationFilter = null)
