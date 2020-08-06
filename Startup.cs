@@ -60,7 +60,7 @@ namespace OK_OnBoarding
             }
 
             //app.UseHttpsRedirection();
-           // app.UseCors(options => options.AllowAnyOrigin());
+            app.UseCors(options => options.AllowAnyOrigin());
             app.UseStaticFiles();
 
             app.UseAuthentication();
