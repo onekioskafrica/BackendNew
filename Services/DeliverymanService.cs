@@ -248,6 +248,8 @@ namespace OK_OnBoarding.Services
             var deliverymanExist = await _dataContext.DeliveryMen.FirstOrDefaultAsync(d => d.Id == request.PerformerId);
             if (deliverymanExist == null)
                 return new GenericResponse { Status = false, Message = "Invalid Deliveryman. " };
+            if (!deliverymanExist.IsVerified)
+                return new GenericResponse { Status = false, Message = "Deliveryman is unverified." };
 
             deliverymanExist.Country = request.Country;
             deliverymanExist.State = request.State;
@@ -286,6 +288,7 @@ namespace OK_OnBoarding.Services
                 return new GenericResponse { Status = false, Message = "Deliveryman not verified." };
 
             deliverymanExist.DateOfBirth = request.DateOfBirth;
+            deliverymanExist.Gender = request.Gender;
             deliverymanExist.PhoneTypeUsed = request.PhoneTypeUsed;
             deliverymanExist.InternetAccess = request.InternetAccess;
             deliverymanExist.MeansOfTransport = request.MeansOfTransport;

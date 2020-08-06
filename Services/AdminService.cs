@@ -38,10 +38,14 @@ namespace OK_OnBoarding.Services
                 return new GenericResponse { Status = false, Message = "Invalid Caller Id" };
             if (!callerExist.IsActive)
                 return new GenericResponse { Status = false, Message = "Caller is not active" };
+            
 
             var adminExist = await _dataContext.Admins.FirstOrDefaultAsync(a => a.AdminId == request.AdminId);
             if (adminExist == null)
                 return new GenericResponse { Status = false, Message = "Invalid Admin Id" };
+
+            if (callerExist.AdminId == adminExist.AdminId)
+                return new GenericResponse { Status = false, Message = "Cannot activate yourself." };
 
             adminExist.IsActive = request.Activate;
             _dataContext.Entry(adminExist).State = EntityState.Modified;

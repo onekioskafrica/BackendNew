@@ -1,4 +1,6 @@
 ﻿using OK_OnBoarding.Contracts.V1;
+using OK_OnBoarding.Contracts.V1.Requests;
+using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Domains;
 using OK_OnBoarding.Entities;
 using OK_OnBoarding.ExternalContract;
@@ -15,5 +17,6 @@ namespace OK_OnBoarding.Services
         Task<AuthenticationResponse> CreateCustomerAsync(Customer customer, string password);
         Task<AuthenticationResponse> LoginCustomerAsync(string email, string password);
         Task<AuthenticationResponse> FacebookLoginCustomerAsync(string accessToken);
+        Task<GenericResponse> UpdateAddressAsync(UpdateAddressRequest request);
     }
 }

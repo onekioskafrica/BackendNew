@@ -52,6 +52,23 @@ namespace OK_OnBoarding.Controllers.V1
         }
 
         [AllowAnonymous]
+        [HttpPost(ApiRoute.Customer.UpdateAddress)]
+        public async Task<IActionResult> UpdateAddress([FromBody] UpdateAddressRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+            var genericResponse = await _customersService.UpdateAddressAsync(request);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [AllowAnonymous]
         [HttpPost(ApiRoute.Customer.Login)]
         public async Task<IActionResult> Login([FromBody] CustomerLoginRequest request)
         {
