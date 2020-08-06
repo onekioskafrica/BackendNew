@@ -51,7 +51,8 @@ namespace OK_OnBoarding.Data
                 new Privilege() { Id = 4, Action = "Publish Blogpost" },
                 new Privilege() { Id = 5, Action = "Deactivate Blogpost" },
                 new Privilege() { Id = 6, Action = "Approve Store Creation" },
-                new Privilege() { Id = 7, Action = "Deactivate Store" }
+                new Privilege() { Id = 7, Action = "Deactivate Store" },
+                new Privilege() { Id = 8, Action = "Activate Deliveryman"}
                 );
             builder.Entity<Product>()
                 .HasIndex(p => new { p.Name, p.Brand, p.InStock, p.Model, p.TypeId });
