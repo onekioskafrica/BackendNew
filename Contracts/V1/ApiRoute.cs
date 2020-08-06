@@ -26,9 +26,6 @@ namespace OK_OnBoarding.Contracts
             public const string GetAllActivatedDeliveryman = Base + "/admins/getactivateddeliverymen";
             public const string GetDeliverymanDetailsById = Base + "/admins/getdeliverymandetailsbyid";
             public const string ActivateDeliveryman = Base + "/admins/activatedeliveryman";
-            public const string GetAllAdmins = Base + "/admins";
-            public const string GetAdminDetailsById = Base + "/admins";
-            public const string ActivateAdmin = Base + "/admins/activateadmin";
         }
 
         public static class Customer

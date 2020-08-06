@@ -36,7 +36,6 @@ namespace OK_OnBoarding.Helpers
             CreateMap<DeliverymanGeneralInfoRequest, Deliveryman>();
             CreateMap<UpdateAddressRequest, Deliveryman>();
             CreateMap<Deliveryman, DeliverymanResponse>();
-            CreateMap<Admin, AdminResponse>();
         }
     }
 }
