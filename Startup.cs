@@ -32,7 +32,11 @@ namespace OK_OnBoarding
         {
             services.AddCors(c =>
             {
-                c.AddPolicy("AllowOrigin", options => options.AllowAnyOrigin());
+                c.AddPolicy("AllowAll", options => {
+                    options.AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+                 });
             });
             services.InstallServicesInAssembly(Configuration);
             services.AddAutoMapper(typeof(Startup));
@@ -60,7 +64,19 @@ namespace OK_OnBoarding
             }
 
             //app.UseHttpsRedirection();
-            app.UseCors(options => options.AllowAnyOrigin());
+            app.Use((context, next) =>
+            {
+                if (context.Request.Method == "OPTIONS")
+                {
+                    context.Response.Headers.Add("Access-Control-Allow-Origin", new[] { (string)context.Request.Headers["Origin"] });
+                    context.Response.Headers.Add("Access-Control-Allow-Headers", new[] { "Origin, X-Requested-With, Content-Type,contentType, Accept, Authorization" });
+                    context.Response.Headers.Add("Access-Control-Allow-Methods", new[] { "GET, POST, PUT, DELETE, OPTIONS" });
+                    context.Response.Headers.Add("Access-Control-Allow-Credentials", new[] { "true" });
+
+                }
+                return next.Invoke();
+            });
+            app.UseCors(options => options.WithOrigins("*"));
             app.UseStaticFiles();
 
             app.UseAuthentication();

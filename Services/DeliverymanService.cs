@@ -215,6 +215,8 @@ namespace OK_OnBoarding.Services
 
             if (deliveryman == null)
                 return new AuthenticationResponse { Errors = new[] { "Deliveryman does not exist." } };
+            if(!deliveryman.IsVerified)
+                return new AuthenticationResponse { Errors = new[] { "Please verify with OTP sent to your phone." } };
 
             bool isPasswordCorrect = false;
             try
