@@ -208,6 +208,8 @@ namespace OK_OnBoarding.Services
 
             if (customer == null)
                 return new AuthenticationResponse { Errors = new[] { "Customer does not exist." } };
+            if(!customer.IsVerified)
+                return new AuthenticationResponse { Errors = new[] { "Please verify with the otp sent to your phone." } };
 
             bool isPasswordCorrect = false;
             try

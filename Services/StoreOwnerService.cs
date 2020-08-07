@@ -207,6 +207,8 @@ namespace OK_OnBoarding.Services
             var storeOwner = await _dataContext.StoreOwners.SingleOrDefaultAsync(s => s.Email == email);
             if(storeOwner == null)
                 return new AuthenticationResponse { Errors = new[] { "Store Owner does not exist." } };
+            if(!storeOwner.IsVerified)
+                return new AuthenticationResponse { Errors = new[] { "Please verify with the OTP sent to your phone." } };
 
             bool isPasswordCorrect = false;
             try

@@ -17,6 +17,8 @@
     <Compile Remove="Migrations\20200726080555_Added_PerformerIdFK_to_AdminActivityLog.Designer.cs" />
     <Compile Remove="Migrations\20200726081000_Added_PerformerIdFK_to_AdminActivityLog.cs" />
     <Compile Remove="Migrations\20200726081000_Added_PerformerIdFK_to_AdminActivityLog.Designer.cs" />
+    <Compile Remove="Migrations\20200807074017_Added_ProductCategoryId_AdminActivityLog.cs" />
+    <Compile Remove="Migrations\20200807074017_Added_ProductCategoryId_AdminActivityLog.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>

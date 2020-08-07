@@ -28,5 +28,6 @@ namespace OK_OnBoarding.Services
         Task<List<AdminResponse>> GetAllAdminsAsync(PaginationFilter paginationFilter = null);
         Task<GenericResponse> GetAdminDetailsByIdAsync(Guid AdminId);
         Task<GenericResponse> ActivateAdminAsync(ActivateAdminRequest request);
+        Task<GenericResponse> CreateProductCategoryAsync(Category category, Guid adminId);
     }
 }

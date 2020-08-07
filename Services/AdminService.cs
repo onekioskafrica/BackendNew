@@ -266,6 +266,61 @@ namespace OK_OnBoarding.Services
             response.Data = userData;
             return response;
         }
+
+        public async Task<GenericResponse> CreateProductCategoryAsync(Category category, Guid adminId)
+        {
+            GenericResponse response = new GenericResponse();
+
+            if (string.IsNullOrWhiteSpace(adminId.ToString()) || string.IsNullOrWhiteSpace(category.Title))
+                return new GenericResponse { Status = false, Message = "AdminId and Title cannot be empty." };
+
+            var adminExist = await _dataContext.Admins.FirstOrDefaultAsync(a => a.AdminId == adminId);
+
+            if (adminExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Admin Id" };
+
+            if (!adminExist.IsActive)
+                return new GenericResponse { Status = false, Message = "Inactive Admin" };
+
+            if(category.ParentId != 0)
+            {
+                var parentCategoryExist = await _dataContext.Categories.FirstOrDefaultAsync(c => c.Id == category.ParentId);
+                if (parentCategoryExist == null)
+                    return new GenericResponse { Status = false, Message = "Invalid Parent Category." };
+            }
+                
+
+            var categoryExist = await _dataContext.Categories.FirstOrDefaultAsync(c => c.Title.ToLower() == category.Title.ToLower());
+            if (categoryExist != null)
+                return new GenericResponse { Status = false, Message = "Category already exists." };
+
+            await _dataContext.Categories.AddAsync(category);
+            var created = 0;
+            try
+            {
+                created = await _dataContext.SaveChangesAsync();
+            }
+            catch(Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred" };
+            }
+            if (created <= 0)
+                return new GenericResponse { Status = false, Message = "Failed to add category." };
+
+            //Log Admin Activity {Hangfire}
+            await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { PerformerId = adminId, Action = AdminActionsEnum.ADMIN_ADDED_PRODUCT_CATEGORY.ToString(), ProductCategoryId = category.Id, DateOfAction = DateTime.Now });
+            try
+            {
+                await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                //Do nothing
+            }
+
+            return new GenericResponse { Status = true, Message = "Category Successfully added.", Data = category };
+        }
+
         public async Task<GenericResponse> GetAdminDetailsByIdAsync(Guid AdminId)
         {
             var adminExist = await _dataContext.Admins.FirstOrDefaultAsync(a => a.AdminId == AdminId);

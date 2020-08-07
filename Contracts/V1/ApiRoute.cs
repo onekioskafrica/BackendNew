@@ -29,6 +29,13 @@ namespace OK_OnBoarding.Contracts
             public const string GetAllAdmins = Base + "/admins/getalladmins";
             public const string GetAdminDetailsById = Base + "/admins/getadmindetailsby";
             public const string ActivateAdmin = Base + "/admins/activateadmin";
+            public const string CreateProductCategory = Base + "/admins/createproductcategory";
+        }
+
+        public static class Products
+        {
+            public const string GetAllCategories = Base + "/products/getallCategories";
+            public const string GetCategoryById = Base + "/products/getcategorybyid";
         }
 
         public static class Customer
