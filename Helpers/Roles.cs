@@ -9,5 +9,6 @@ namespace OK_OnBoarding.Helpers
     {
         public const string SuperAdmin = "SuperAdmin";
         public const string Admin = "Admin";
+        public const string StoreOwner = "StoreOwner";
     }
 }

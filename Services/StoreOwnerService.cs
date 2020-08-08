@@ -242,6 +242,7 @@ namespace OK_OnBoarding.Services
                 new Claim("LastName", storeOwner.LastName),
                 new Claim("Email", storeOwner.Email),
                 new Claim("PhoneNumber", storeOwner.PhoneNumber),
+                new Claim(ClaimTypes.Role, Roles.StoreOwner),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 

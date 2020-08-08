@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Data;
+using OK_OnBoarding.Domains;
 using OK_OnBoarding.Entities;
 using OK_OnBoarding.Helpers;
 using OK_OnBoarding.Options;
@@ -172,6 +173,54 @@ namespace OK_OnBoarding.Services
                 response.Message = "Successfully added store business info.";
             }
             return response;
+        }
+
+        public async Task<GenericResponse> GetStoreByIdAsync(Guid storeId)
+        {
+            var store = await _dataContext.Stores.FirstOrDefaultAsync(s => s.Id == storeId);
+            if (store == null)
+                return new GenericResponse { Status = false, Message = "Invalid Store Id." };
+
+            return new GenericResponse { Status = true, Message = "Success", Data = store };
+        }
+
+        public async Task<GenericResponse> GetStoreByStoreIdAsync(string storeId)
+        {
+            var store = await _dataContext.Stores.FirstOrDefaultAsync(s => s.StoreId == storeId);
+            if (store == null)
+                return new GenericResponse { Status = false, Message = "Invalid Store Id." };
+
+            return new GenericResponse { Status = true, Message = "Success", Data = store };
+        }
+
+        public async Task<List<Store>> GetAllStoresByStoreOwnerIdAsync(Guid storeOwnerId, PaginationFilter paginationFilter = null)
+        {
+            List<Store> allStores = null;
+            if(paginationFilter == null)
+            {
+                allStores = await _dataContext.Stores.Where(s => s.StoreOwnerId == storeOwnerId).ToListAsync<Store>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allStores = await _dataContext.Stores.Where(s => s.StoreOwnerId == storeOwnerId).Skip(skip).Take(paginationFilter.PageSize).ToListAsync<Store>();
+            }
+            return allStores;
+        }
+
+        public async Task<List<Store>> GetAllStoresAsync(PaginationFilter paginationFilter = null)
+        {
+            List<Store> allStores = null;
+            if (paginationFilter == null)
+            {
+                allStores = await _dataContext.Stores.ToListAsync<Store>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allStores = await _dataContext.Stores.Skip(skip).Take(paginationFilter.PageSize).ToListAsync<Store>();
+            }
+            return allStores;
         }
 
         public string GenerateStoreId(int length)

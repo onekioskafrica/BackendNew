@@ -1,0 +1,86 @@
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using OK_OnBoarding.Contracts;
+using OK_OnBoarding.Contracts.V1.Requests;
+using OK_OnBoarding.Contracts.V1.Responses;
+using OK_OnBoarding.Entities;
+using OK_OnBoarding.Helpers;
+using OK_OnBoarding.Services;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace OK_OnBoarding.Controllers
+{
+    [Authorize]
+    public class ProductController : Controller
+    {
+        private readonly IMapper _mapper;
+        private readonly IProductService _productService;
+
+        public ProductController(IMapper mapper, IProductService productService)
+        {
+            _mapper = mapper;
+            _productService = productService;
+        }
+
+        [AllowAnonymous]
+        [HttpGet(ApiRoute.Products.GetAllCategories)]
+        public async Task<IActionResult> GetAllCategories()
+        {
+            var genericResponse = await _productService.GetAllCategoriesAsync();
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [AllowAnonymous]
+        [HttpGet(ApiRoute.Products.GetCategoryById)]
+        public async Task<IActionResult> GetCategoryById(int categoryId)
+        {
+            var genericResponse = await _productService.GetCategoryByIdAsync(categoryId);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [Authorize(Roles = Roles.StoreOwner)]
+        [HttpPost(ApiRoute.Products.CreateProduct)]
+        public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+
+            var genericResponse = await _productService.CreateProductAsync(request);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [Authorize(Roles = Roles.StoreOwner)]
+        [HttpPut(ApiRoute.Products.UploadProductPhotos)]
+        public async Task<IActionResult> UploadProductPhotos([FromForm] UploadProductPhotosRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+
+            var genericResponse = await _productService.UploadProductPhotosAsync(request);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+    }
+}

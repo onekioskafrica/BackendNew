@@ -27,5 +27,7 @@ namespace OK_OnBoarding.Entities
         public bool IsGoogleRegistered { get; set; } = false;
         public DateTime? LastLoginDate { get; set; }
         public DateTime? DateRegistered { get; set; }
+
+        public ICollection<Store> Stores { get; set; } // All the Stores owned by this StoreOwner.
     }
 }

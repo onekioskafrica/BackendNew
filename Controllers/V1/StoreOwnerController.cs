@@ -4,9 +4,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OK_OnBoarding.Contracts;
 using OK_OnBoarding.Contracts.V1.Requests;
+using OK_OnBoarding.Contracts.V1.Requests.Queries;
 using OK_OnBoarding.Contracts.V1.Responses;
+using OK_OnBoarding.Domains;
 using OK_OnBoarding.Entities;
 using OK_OnBoarding.ExternalContract;
+using OK_OnBoarding.Helpers;
 using OK_OnBoarding.Services;
 using System;
 using System.Collections.Generic;
@@ -104,5 +107,6 @@ namespace OK_OnBoarding.Controllers.V1
                 return BadRequest(genericResponse);
             return Ok(genericResponse);
         }
+
     }
 }

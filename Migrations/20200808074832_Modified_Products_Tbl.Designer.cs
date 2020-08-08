@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OK_OnBoarding.Data;
 
 namespace OK_OnBoarding.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20200808074832_Modified_Products_Tbl")]
+    partial class Modified_Products_Tbl
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1082,18 +1084,19 @@ namespace OK_OnBoarding.Migrations
 
             modelBuilder.Entity("OK_OnBoarding.Entities.ProductCategory", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("ProductId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("ProductId")
+                    b.Property<Guid?>("ProductId1")
                         .HasColumnType("uniqueidentifier");
 
-                    b.HasKey("Id");
+                    b.HasKey("ProductId");
+
+                    b.HasIndex("ProductId1");
 
                     b.HasIndex("ProductId", "CategoryId");
 
@@ -1131,22 +1134,32 @@ namespace OK_OnBoarding.Migrations
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime?>("SaleEndDate")
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SaleEndDate")
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("SalePrice")
                         .HasColumnType("decimal(18, 2)");
 
-                    b.Property<DateTime?>("SaleStartDate")
+                    b.Property<DateTime>("SaleStartDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("SellerSku")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("StoreId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Variation")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductId")
-                        .IsUnique();
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("StoreId");
 
                     b.HasIndex("Price", "SalePrice", "SaleStartDate", "SaleEndDate");
 
@@ -1906,17 +1919,15 @@ namespace OK_OnBoarding.Migrations
 
             modelBuilder.Entity("OK_OnBoarding.Entities.ProductCategory", b =>
                 {
-                    b.HasOne("OK_OnBoarding.Entities.Product", "Product")
+                    b.HasOne("OK_OnBoarding.Entities.Product", null)
                         .WithMany("ProductCategories")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ProductId1");
                 });
 
             modelBuilder.Entity("OK_OnBoarding.Entities.ProductImage", b =>
                 {
-                    b.HasOne("OK_OnBoarding.Entities.Product", "Product")
-                        .WithMany("ProductImages")
+                    b.HasOne("OK_OnBoarding.Entities.Product", null)
+                        .WithMany("ProducutImages")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1925,10 +1936,14 @@ namespace OK_OnBoarding.Migrations
             modelBuilder.Entity("OK_OnBoarding.Entities.ProductPricing", b =>
                 {
                     b.HasOne("OK_OnBoarding.Entities.Product", "Product")
-                        .WithOne("ProductPricing")
-                        .HasForeignKey("OK_OnBoarding.Entities.ProductPricing", "ProductId")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("OK_OnBoarding.Entities.Store", "Store")
+                        .WithMany()
+                        .HasForeignKey("StoreId");
                 });
 
             modelBuilder.Entity("OK_OnBoarding.Entities.ProductReview", b =>
@@ -1943,7 +1958,7 @@ namespace OK_OnBoarding.Migrations
             modelBuilder.Entity("OK_OnBoarding.Entities.Store", b =>
                 {
                     b.HasOne("OK_OnBoarding.Entities.StoreOwner", "StoreOwner")
-                        .WithMany("Stores")
+                        .WithMany()
                         .HasForeignKey("StoreOwnerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

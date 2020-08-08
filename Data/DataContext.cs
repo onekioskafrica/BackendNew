@@ -55,7 +55,7 @@ namespace OK_OnBoarding.Data
                 new Privilege() { Id = 8, Action = "Create Product Category" }
                 );
             builder.Entity<Product>()
-                .HasIndex(p => new { p.Name, p.Brand, p.InStock, p.Model, p.TypeId });
+                .HasIndex(p => new { p.Name, p.Brand, p.IsActive, p.IsVisible, p.DateCreated, p.Model });
             builder.Entity<ProductCategory>()
                 .HasIndex(p => new { p.ProductId, p.CategoryId });
             builder.Entity<ProductImage>()
@@ -103,7 +103,6 @@ namespace OK_OnBoarding.Data
         public DbSet<ProductImage> ProductImage { get; set; }
         public DbSet<ProductPricing> ProductPricing { get; set; }
         public DbSet<ProductReview> ProductReviews { get; set; }
-        public DbSet<ProductType> ProductTypes { get; set; }
         public DbSet<Store> Stores { get; set; }
         public DbSet<StoreOwner> StoreOwners { get; set; }
         public DbSet<StoreOwnerActivityLog> StoreOwnerActivityLogs { get; set; }

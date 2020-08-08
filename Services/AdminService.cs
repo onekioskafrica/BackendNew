@@ -321,6 +321,11 @@ namespace OK_OnBoarding.Services
             return new GenericResponse { Status = true, Message = "Category Successfully added.", Data = category };
         }
 
+        public Task<GenericResponse> CreateProductTypeAsync(string productType, Guid adminId)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task<GenericResponse> GetAdminDetailsByIdAsync(Guid AdminId)
         {
             var adminExist = await _dataContext.Admins.FirstOrDefaultAsync(a => a.AdminId == AdminId);

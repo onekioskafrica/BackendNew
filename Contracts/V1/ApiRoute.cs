@@ -36,6 +36,11 @@ namespace OK_OnBoarding.Contracts
         {
             public const string GetAllCategories = Base + "/products/getallCategories";
             public const string GetCategoryById = Base + "/products/getcategorybyid";
+            public const string CreateProduct = Base + "/products/addproduct";
+            public const string UploadProductPhotos = Base + "/products/uploadproductphotos";
+            public const string GetProductsByCategory = Base + "/products/getproductsbycategory";
+            public const string GetProductsByStore = Base + "/products/getproductsbystore";
+            public const string GetProductById = Base + "/products/getproductbyid";
         }
 
         public static class Customer
@@ -56,6 +61,7 @@ namespace OK_OnBoarding.Contracts
             public const string FacebookAuth = Base + "/storeowners/auth/fbauth";
             public const string GoogleAuth = Base + "/storeowners/auth/googleauth";
             public const string EnableStoreOwnerCreation = Base + "/storeowners/enablestoreownercreation";
+            
         }
 
         public static class Deliveryman
@@ -78,11 +84,11 @@ namespace OK_OnBoarding.Contracts
             public const string Login = Base + "/superadmin/login";
             public const string CreateAdmin = Base + "/superadmin/createadmin";
             public const string DeactivateAdmin = Base + "/superadmin/deactivateadmin";
-            public const string GetAllPrivileges = Base + "superadmin/getallprivileges";
-            public const string GetAdminById = Base + "superadmin/getadminbyid";
-            public const string GetAllAdmins = Base + "superadmin/getalladmins";
-            public const string GetAllAdminsActivityLogs = Base + "superadmin/getalladminsactivitylogs";
-            public const string GetSingleAdminAcitvityLogs = Base + "superadmin/getsingleadminsacitivitylogs";
+            public const string GetAllPrivileges = Base + "/superadmin/getallprivileges";
+            public const string GetAdminById = Base + "/superadmin/getadminbyid";
+            public const string GetAllAdmins = Base + "/superadmin/getalladmins";
+            public const string GetAllAdminsActivityLogs = Base + "/superadmin/getalladminsactivitylogs";
+            public const string GetSingleAdminAcitvityLogs = Base + "/superadmin/getsingleadminsacitivitylogs";
         }
 
         public static class Store
@@ -90,6 +96,10 @@ namespace OK_OnBoarding.Contracts
             public const string CreateStoreBasic = Base + "/store/basicstoreinfo";
             public const string UploadStoreBankDetails = Base + "/store/bankdetails";
             public const string UploadStoreBusinessInfo = Base + "/store/businessinfo";
+            public const string GetStoreById = Base + "/store/getstorebyid";
+            public const string GetStoreByStoreId = Base + "/store/getstorebystoreid";
+            public const string GetAllStoresByStoreOwnerId = Base + "/store/getstoresbystoreownerid";
+            public const string GetAllStores = Base + "/store/getallstores";
         }
     }
 }

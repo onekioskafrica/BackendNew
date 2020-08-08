@@ -29,5 +29,6 @@ namespace OK_OnBoarding.Services
         Task<GenericResponse> GetAdminDetailsByIdAsync(Guid AdminId);
         Task<GenericResponse> ActivateAdminAsync(ActivateAdminRequest request);
         Task<GenericResponse> CreateProductCategoryAsync(Category category, Guid adminId);
+        Task<GenericResponse> CreateProductTypeAsync(string productType, Guid adminId);
     }
 }

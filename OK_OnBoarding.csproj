@@ -19,6 +19,10 @@
     <Compile Remove="Migrations\20200726081000_Added_PerformerIdFK_to_AdminActivityLog.Designer.cs" />
     <Compile Remove="Migrations\20200807074017_Added_ProductCategoryId_AdminActivityLog.cs" />
     <Compile Remove="Migrations\20200807074017_Added_ProductCategoryId_AdminActivityLog.Designer.cs" />
+    <Compile Remove="Migrations\20200808074438_Modified_Products_Tbl.cs" />
+    <Compile Remove="Migrations\20200808074438_Modified_Products_Tbl.Designer.cs" />
+    <Compile Remove="Migrations\20200808080306_Modified_StoreOwners_Tbl.cs" />
+    <Compile Remove="Migrations\20200808080306_Modified_StoreOwners_Tbl.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,6 +31,7 @@
     <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="3.3.101" />
     <PackageReference Include="AWSSDK.S3" Version="3.3.111.30" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.1.5" />
+    <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="3.1.5" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.5" />
