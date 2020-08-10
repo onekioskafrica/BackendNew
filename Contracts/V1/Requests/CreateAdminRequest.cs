@@ -30,12 +30,6 @@ namespace OK_OnBoarding.Contracts.V1.Requests
         public string PhoneNumber { get; set; }
 
         [Required]
-        [DataType(DataType.Password)]
-        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$", ErrorMessage = "Password must meet minimum complexity requirements")]
-        [StringLength(250, ErrorMessage = "Password must be a minimum of 8 characters in length", MinimumLength = 8)]
-        public string Password { get; set; }
-
-        [Required]
         public string Privileges { get; set; }
     }
 }

@@ -20,15 +20,18 @@ namespace OK_OnBoarding.Services
 {
     public class AdminService : IAdminService
     {
+        private static Random random = new Random();
         private readonly DataContext _dataContext;
         private readonly IMapper _mapper;
         private readonly JwtSettings _jwtSettings;
+        private readonly AppSettings _appSettings;
 
-        public AdminService(DataContext dataContext, JwtSettings jwtSettings, IMapper mapper)
+        public AdminService(DataContext dataContext, JwtSettings jwtSettings, IMapper mapper, AppSettings appSettings)
         {
             _dataContext = dataContext;
             _mapper = mapper;
             _jwtSettings = jwtSettings;
+            _appSettings = appSettings;
         }
 
         public async Task<GenericResponse> ActivateAdminAsync(ActivateAdminRequest request)
@@ -198,7 +201,7 @@ namespace OK_OnBoarding.Services
             return new GenericResponse { Status = true, Message = "Password Changed Successfully." };
         }
 
-        public async Task<GenericResponse> CreateAdminAsync(Admin admin, string password, Guid callerId)
+        public async Task<GenericResponse> CreateAdminAsync(Admin admin, Guid callerId)
         {
             GenericResponse response = new GenericResponse();
             //Create Admin
@@ -211,7 +214,8 @@ namespace OK_OnBoarding.Services
             {
                 return new GenericResponse { Status = false, Message = "Admin with this email or phonenumber already exists." };
             }
-
+            //string password = GenerateAdminPassword(_appSettings.LengthOfGeneratedPassword);
+            string password = "Test123@";
             byte[] passwordHash, passwordSalt;
             try
             {
@@ -247,7 +251,7 @@ namespace OK_OnBoarding.Services
                 return response;
             }
 
-            //Send Mail to Admin
+            //Send Mail to Admin {Hangfire} send password also
 
             //Log Admin Activity {Hangfire}
             await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { PerformerId = callerId, Action = AdminActionsEnum.ADMIN_CREATE_ADMIN.ToString(), AdminId = admin.AdminId, DateOfAction = DateTime.Now });
@@ -516,6 +520,13 @@ namespace OK_OnBoarding.Services
             var userData = _mapper.Map<AdminUserDataResponse>(admin);
             var token = GenerateAuthenticationTokenForAdmin(admin);
             return new AuthenticationResponse { Success = true, Token = token, Data = userData };
+        }
+
+        public string GenerateAdminPassword(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*()_-+=";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
         private string GenerateAuthenticationTokenForAdmin(Admin admin)

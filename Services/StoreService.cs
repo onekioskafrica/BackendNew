@@ -177,18 +177,22 @@ namespace OK_OnBoarding.Services
 
         public async Task<GenericResponse> GetStoreByIdAsync(Guid storeId)
         {
-            var store = await _dataContext.Stores.FirstOrDefaultAsync(s => s.Id == storeId);
+            var store = await _dataContext.Stores.Include(s => s.StoresBankAccount).Include(s => s.StoresBusinessInformation).Include(s => s.StoreOwner).FirstOrDefaultAsync(s => s.Id == storeId);
             if (store == null)
                 return new GenericResponse { Status = false, Message = "Invalid Store Id." };
+            store.StoreOwner.PasswordHash = null;
+            store.StoreOwner.PasswordSalt = null;
 
             return new GenericResponse { Status = true, Message = "Success", Data = store };
         }
 
         public async Task<GenericResponse> GetStoreByStoreIdAsync(string storeId)
         {
-            var store = await _dataContext.Stores.FirstOrDefaultAsync(s => s.StoreId == storeId);
+            var store = await _dataContext.Stores.Include(s => s.StoresBankAccount).Include(s => s.StoresBusinessInformation).Include(s => s.StoreOwner).FirstOrDefaultAsync(s => s.StoreId == storeId);
             if (store == null)
                 return new GenericResponse { Status = false, Message = "Invalid Store Id." };
+            store.StoreOwner.PasswordHash = null;
+            store.StoreOwner.PasswordSalt = null;
 
             return new GenericResponse { Status = true, Message = "Success", Data = store };
         }
@@ -198,12 +202,12 @@ namespace OK_OnBoarding.Services
             List<Store> allStores = null;
             if(paginationFilter == null)
             {
-                allStores = await _dataContext.Stores.Where(s => s.StoreOwnerId == storeOwnerId).ToListAsync<Store>();
+                allStores = await _dataContext.Stores.Where(s => s.StoreOwnerId == storeOwnerId).Include(s => s.StoresBankAccount).Include(s => s.StoresBusinessInformation).ToListAsync<Store>();
             }
             else
             {
                 var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
-                allStores = await _dataContext.Stores.Where(s => s.StoreOwnerId == storeOwnerId).Skip(skip).Take(paginationFilter.PageSize).ToListAsync<Store>();
+                allStores = await _dataContext.Stores.Where(s => s.StoreOwnerId == storeOwnerId).Include(s => s.StoresBankAccount).Include(s => s.StoresBusinessInformation).Skip(skip).Take(paginationFilter.PageSize).ToListAsync<Store>();
             }
             return allStores;
         }
@@ -213,12 +217,12 @@ namespace OK_OnBoarding.Services
             List<Store> allStores = null;
             if (paginationFilter == null)
             {
-                allStores = await _dataContext.Stores.ToListAsync<Store>();
+                allStores = await _dataContext.Stores.Include(s => s.StoresBankAccount).Include(s => s.StoresBusinessInformation).ToListAsync<Store>();
             }
             else
             {
                 var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
-                allStores = await _dataContext.Stores.Skip(skip).Take(paginationFilter.PageSize).ToListAsync<Store>();
+                allStores = await _dataContext.Stores.Skip(skip).Take(paginationFilter.PageSize).Include(s => s.StoresBankAccount).Include(s => s.StoresBusinessInformation).ToListAsync<Store>();
             }
             return allStores;
         }

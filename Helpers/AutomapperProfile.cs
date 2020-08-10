@@ -38,6 +38,7 @@ namespace OK_OnBoarding.Helpers
             CreateMap<Deliveryman, DeliverymanResponse>();
             CreateMap<CreateProductCategoryRequest, Category>();
             CreateMap<CreateProductRequest, Product>();
+            CreateMap<StoreOwner, StoreOwnerResponse>();
         }
     }
 }

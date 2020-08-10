@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OK_OnBoarding.Contracts;
 using OK_OnBoarding.Contracts.V1.Requests;
+using OK_OnBoarding.Contracts.V1.Requests.Queries;
 using OK_OnBoarding.Contracts.V1.Responses;
+using OK_OnBoarding.Domains;
 using OK_OnBoarding.Entities;
 using OK_OnBoarding.Helpers;
 using OK_OnBoarding.Services;
@@ -81,6 +83,33 @@ namespace OK_OnBoarding.Controllers
             if (!genericResponse.Status)
                 return BadRequest(genericResponse);
             return Ok(genericResponse);
+        }
+
+        [HttpGet(ApiRoute.Products.GetProductById)]
+        public async Task<IActionResult> GetProductById([FromQuery] [Required] Guid productId)
+        {
+            var genericResponse = await _productService.GetProductByIdAsync(productId);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [HttpGet(ApiRoute.Products.GetProductsByStore)]
+        public async Task<IActionResult> GetProductsByStore([FromQuery] [Required] Guid storeId, PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+            var allProductByStore = await _productService.GetProductsByStoreAsync(storeId, pagination);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<Product>(allProductByStore));
+
+            var paginationResponse = new PagedResponse<Product>
+            {
+                Data = allProductByStore,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
+            };
+            return Ok(paginationResponse);
         }
     }
 }

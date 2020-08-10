@@ -74,7 +74,7 @@ namespace OK_OnBoarding.Services
             if(created <= 0)
                 return new AuthenticationResponse { Errors = new[] { "Failed to register store owner." } };
 
-            var genericResponse = await _otpService.GenerateOTPForStoreOwner(OTPGenerationReason.TokenGeneration.ToString(), storeOwner.PhoneNumber, storeOwner.Email);
+            var genericResponse = await _otpService.GenerateOTPForStoreOwner(OTPGenerationReason.OTPGENERATION_FOR_SIGN_UP.ToString(), storeOwner.PhoneNumber, storeOwner.Email);
             if (genericResponse.Status)
             {
                 // Send Sms
@@ -215,9 +215,9 @@ namespace OK_OnBoarding.Services
             {
                 isPasswordCorrect = Security.VerifyPassword(password, storeOwner.PasswordHash, storeOwner.PasswordSalt);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return new AuthenticationResponse { Errors = new[] { "Error Occurred." } };
+                return new AuthenticationResponse { Errors = new[] { ex.Message } };
             }
             if(!isPasswordCorrect)
                 return new AuthenticationResponse { Errors = new[] { "Store Owner Email/Password is not correct." } };

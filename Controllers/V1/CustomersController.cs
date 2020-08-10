@@ -7,6 +7,7 @@ using OK_OnBoarding.Contracts.V1.Requests;
 using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Entities;
 using OK_OnBoarding.ExternalContract;
+using OK_OnBoarding.Helpers;
 using OK_OnBoarding.Services;
 using System;
 using System.Collections.Generic;
@@ -118,6 +119,15 @@ namespace OK_OnBoarding.Controllers.V1
         public async Task<IActionResult> EnableCustomerCreation([FromBody] EnableUserCreationRequest request)
         {
             var genericResponse = await _otpService.VerifyOTPForCustomer(request.OTP, request.PhoneNumber);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [HttpPost(ApiRoute.Customer.ResendOTP)]
+        public async Task<IActionResult> ResendOTP([FromBody] ResendOTPRequest request)
+        {
+            var genericResponse = await _otpService.ResendOTPForCustomer(OTPGenerationReason.OTPGENERATION_RESEND.ToString(), request.PhoneNumber, request.Email);
             if (!genericResponse.Status)
                 return BadRequest(genericResponse);
             return Ok(genericResponse);

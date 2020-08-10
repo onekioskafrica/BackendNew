@@ -52,6 +52,7 @@ namespace OK_OnBoarding.Contracts
             public const string GoogleAuth = Base + "/customers/auth/googleauth";
             public const string EnableCustomerCreation = Base + "/customers/enablecustomercreation";
             public const string UpdateAddress = Base + "/customers/updateaddress";
+            public const string ResendOTP = Base + "/customers/resendotp";
         }
 
         public static class StoreOwner
@@ -61,7 +62,7 @@ namespace OK_OnBoarding.Contracts
             public const string FacebookAuth = Base + "/storeowners/auth/fbauth";
             public const string GoogleAuth = Base + "/storeowners/auth/googleauth";
             public const string EnableStoreOwnerCreation = Base + "/storeowners/enablestoreownercreation";
-            
+            public const string ResendOTP = Base + "/storeowners/resendotp";
         }
 
         public static class Deliveryman
@@ -75,6 +76,7 @@ namespace OK_OnBoarding.Contracts
             public const string UpdateGeneralInformation = Base + "/deliverymen/updategeneralinformation";
             public const string UploadDoc = Base + "/deliverymen/uploaddocuments";
             public const string AddCompanyDetails = Base + "/deliverymen/addcompanydetails";
+            public const string ResendOTP = Base + "/deliverymen/resendotp";
         }
 
         public static class SuperAdmin

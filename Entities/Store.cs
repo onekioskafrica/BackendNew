@@ -29,6 +29,7 @@ namespace OK_OnBoarding.Entities
         public StoreOwner StoreOwner { get; set; } //Owner of Store
         public StoresBankAccount StoresBankAccount { get; set; }
         public StoresBusinessInformation StoresBusinessInformation { get; set; }
+        public ICollection<Product> Products { get; set; } //All the Products in this store
         
     }
 }

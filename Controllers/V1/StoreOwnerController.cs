@@ -108,5 +108,14 @@ namespace OK_OnBoarding.Controllers.V1
             return Ok(genericResponse);
         }
 
+        [HttpPost(ApiRoute.StoreOwner.ResendOTP)]
+        public async Task<IActionResult> ResendOTP([FromBody] ResendOTPRequest request)
+        {
+            var genericResponse = await _otpService.ResendOTPForStoreOwner(OTPGenerationReason.OTPGENERATION_RESEND.ToString(), request.PhoneNumber, request.Email);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
     }
 }

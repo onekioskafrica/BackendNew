@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Amazon.S3;
 using AutoMapper;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.EntityFrameworkCore;
@@ -30,6 +31,7 @@ namespace OK_OnBoarding
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
             services.AddCors(c =>
             {
                 c.AddPolicy("AllowAll", options => {
@@ -38,6 +40,7 @@ namespace OK_OnBoarding
                     .AllowAnyMethod();
                  });
             });
+
             services.InstallServicesInAssembly(Configuration);
             services.AddAutoMapper(typeof(Startup));
             services.AddControllersWithViews();

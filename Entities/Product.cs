@@ -11,6 +11,8 @@ namespace OK_OnBoarding.Entities
     {
         [Key]
         public Guid Id { get; set; }
+
+        [ForeignKey("Store")]
         public Guid StoreId { get; set; }
         public string Name { get; set; }
         public string MetaTitle { get; set; }

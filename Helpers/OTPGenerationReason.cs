@@ -7,6 +7,7 @@ namespace OK_OnBoarding.Helpers
 {
     public enum OTPGenerationReason
     {
-        TokenGeneration = 1
+        OTPGENERATION_FOR_SIGN_UP = 1,
+        OTPGENERATION_RESEND = 2
     }
 }

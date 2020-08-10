@@ -79,7 +79,7 @@ namespace OK_OnBoarding.Services
             {
                 return new AuthenticationResponse { Errors = new[] { "Failed to register deliveryman." } };
             }
-            var genericResponse = await _otpService.GenerateOTPForDeliveryman(OTPGenerationReason.TokenGeneration.ToString(), deliveryman.PhoneNumber, deliveryman.Email);
+            var genericResponse = await _otpService.GenerateOTPForDeliveryman(OTPGenerationReason.OTPGENERATION_FOR_SIGN_UP.ToString(), deliveryman.PhoneNumber, deliveryman.Email);
             if (genericResponse.Status)
             {
                 // Send Sms
@@ -218,14 +218,19 @@ namespace OK_OnBoarding.Services
             if(!deliveryman.IsVerified)
                 return new AuthenticationResponse { Errors = new[] { "Please verify with OTP sent to your phone." } };
 
+            var isUpdateComplete = true;
+
+            if (string.IsNullOrWhiteSpace(deliveryman.AccountNumber) || string.IsNullOrWhiteSpace(deliveryman.Line1) || string.IsNullOrWhiteSpace(deliveryman.GovernmentIssuedIDBack))
+                isUpdateComplete = false;
+
             bool isPasswordCorrect = false;
             try
             {
                 isPasswordCorrect = Security.VerifyPassword(password, deliveryman.PasswordHash, deliveryman.PasswordSalt);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return new AuthenticationResponse { Errors = new[] { "Error Occurred." } };
+                return new AuthenticationResponse { Errors = new[] { ex.Message } };
             }
             if(!isPasswordCorrect)
                 return new AuthenticationResponse { Errors = new[] { "Deliveryman Email/Password is not correct." } };
@@ -237,6 +242,7 @@ namespace OK_OnBoarding.Services
                 return new AuthenticationResponse { Errors = new[] { "Failed to signin." } };
 
             var userData = _mapper.Map<UserDataResponse>(deliveryman);
+            userData.IsUpdateComplete = isUpdateComplete;
 
             var token = GenerateAuthenticationTokenForDeliveryman(deliveryman);
             return new AuthenticationResponse { Success = true, Token = token, Data = userData };

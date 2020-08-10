@@ -78,7 +78,7 @@ namespace OK_OnBoarding.Controllers.V1
             }
             var admin = _mapper.Map<Admin>(model);
 
-            var genericResponse = await _superAdminService.CreateAdminAsync(admin, model.Password);
+            var genericResponse = await _superAdminService.CreateAdminAsync(admin);
 
             if (!genericResponse.Status)
                 return BadRequest(genericResponse);

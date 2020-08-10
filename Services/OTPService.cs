@@ -2,7 +2,9 @@
 using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Data;
 using OK_OnBoarding.Entities;
+using OK_OnBoarding.ExternalContract;
 using OK_OnBoarding.Helpers;
+using OK_OnBoarding.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,11 +16,13 @@ namespace OK_OnBoarding.Services
     {
         private readonly AppSettings _appSettings;
         private readonly DataContext _dataContext;
+        private readonly TermiiAuthSettings _termiiAuthSettings;
 
-        public OTPService(AppSettings appSettings, DataContext dataContext)
+        public OTPService(AppSettings appSettings, DataContext dataContext, TermiiAuthSettings termiiAuthSettings)
         {
             _appSettings = appSettings;
             _dataContext = dataContext;
+            _termiiAuthSettings = termiiAuthSettings;
         }
 
         public async Task<GenericResponse> VerifyOTPForDeliveryman(string OTP, string PhoneNumber)
@@ -229,7 +233,15 @@ namespace OK_OnBoarding.Services
                     StatusOperation = tokenGenerationReason
                 };
                 await _dataContext.StoreOwnerTokens.AddAsync(token);
-                var created = await _dataContext.SaveChangesAsync();
+                var created = 0;
+                try
+                {
+                    created = await _dataContext.SaveChangesAsync();
+                }
+                catch(Exception)
+                {
+                    return new GenericResponse { Status = false, Message = "Error Occurred." };
+                }
                 if(created <= 0)
                 {
                     genericResponse.Status = false;
@@ -267,7 +279,15 @@ namespace OK_OnBoarding.Services
                     StatusOperation = tokenGenerationReason
                 };
                 await _dataContext.DeliverymenTokens.AddAsync(token);
-                var created = await _dataContext.SaveChangesAsync();
+                var created = 0;
+                try
+                {
+                    created = await _dataContext.SaveChangesAsync();
+                }
+                catch (Exception)
+                {
+                    return new GenericResponse { Status = false, Message = "Error Occurred." };
+                }
                 if (created <= 0)
                 {
                     genericResponse.Status = false;
@@ -305,7 +325,15 @@ namespace OK_OnBoarding.Services
                     StatusOperation = tokenGenerationReason
                 };
                 await _dataContext.CustomerTokens.AddAsync(token);
-                var created = await _dataContext.SaveChangesAsync();
+                var created = 0;
+                try
+                {
+                    created = await _dataContext.SaveChangesAsync();
+                }
+                catch (Exception)
+                {
+                    return new GenericResponse { Status = false, Message = "Error Occurred." };
+                }
                 if(created <= 0)
                 {
                     genericResponse.Status = false;
@@ -318,6 +346,125 @@ namespace OK_OnBoarding.Services
                 }
             }
             return genericResponse;
+        }
+
+        public async Task<GenericResponse> ResendOTPForStoreOwner(string tokenGenerationReason, string phoneNumber, string email)
+        {
+            var storeOwnerExist = await _dataContext.StoreOwners.Where(s => s.Email == email.Trim() && s.PhoneNumber == phoneNumber.Trim()).Select(s => new StoreOwner { Id = s.Id, IsVerified = s.IsVerified }).FirstOrDefaultAsync();
+
+            if (storeOwnerExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid PhoneNumber/Email" };
+            if (storeOwnerExist.IsVerified)
+                return new GenericResponse { Status = false, Message = "Phone number already verified." };
+
+            var token = new StoreOwnerToken()
+            {
+                StoreOwnerId = storeOwnerExist.Id,
+                DateCreated = DateTime.Now,
+                ExpiryDate = DateTime.Now.AddDays(_appSettings.ExpireInDays),
+                IsUsed = false,
+                TheToken = GenerateOTP(),
+                StatusOperation = tokenGenerationReason
+            };
+            await _dataContext.StoreOwnerTokens.AddAsync(token);
+            var created = 0;
+            try
+            {
+                created = await _dataContext.SaveChangesAsync();
+            }
+            catch
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (created <= 0)
+                return new GenericResponse { Status = false, Message = "Couldn't generate OTP" };
+
+            var termiiResponse = await SendSms(phoneNumber, token.TheToken);
+
+            if (termiiResponse.Code.ToLower() == "ok")
+                return new GenericResponse { Status = true, Message = "OTP has been sent to your phone number." };
+
+            return new GenericResponse { Status = false, Message = "Couldn't resend OTP." };
+
+        }
+
+        public async Task<GenericResponse> ResendOTPForDeliveryman(string tokenGenerationReason, string phoneNumber, string email)
+        {
+            var deliverymanExist = await _dataContext.DeliveryMen.Where(d => d.Email == email && d.PhoneNumber == phoneNumber).Select(d => new Deliveryman { Id = d.Id, IsVerified = d.IsVerified }).FirstOrDefaultAsync();
+
+            if (deliverymanExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Phonenumber/Email" };
+            if (deliverymanExist.IsVerified)
+                return new GenericResponse { Status = false, Message = "Phone number already verified." };
+
+            var token = new DeliverymanToken()
+            {
+                DeliverymanId = deliverymanExist.Id,
+                DateCreated = DateTime.Now,
+                ExpiryDate = DateTime.Now.AddDays(_appSettings.ExpireInDays),
+                IsUsed = false,
+                TheToken = GenerateOTP(),
+                StatusOperation = tokenGenerationReason
+            };
+            await _dataContext.DeliverymenTokens.AddAsync(token);
+            var created = 0;
+            try
+            {
+                created = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (created <= 0)
+                return new GenericResponse { Status = false, Message = "Couldn't generate OTP" };
+
+            var termiiResponse = await SendSms(phoneNumber, token.TheToken);
+
+            if (termiiResponse.Code.ToLower() == "ok")
+                return new GenericResponse { Status = true, Message = "OTP has been sent to your phone number." };
+
+            return new GenericResponse { Status = false, Message = "Couldn't resend OTP." };
+
+        }
+
+        public async Task<GenericResponse> ResendOTPForCustomer(string tokenGenerationReason, string phoneNumber, string email)
+        {
+            var customerExist = await _dataContext.Customers.Where(c => c.Email == email && c.PhoneNumber == phoneNumber).Select(c => new Customer { CustomerId = c.CustomerId, IsVerified = c.IsVerified }).FirstOrDefaultAsync();
+
+            if (customerExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Phonenumber/Email" };
+            if (customerExist.IsVerified)
+                return new GenericResponse { Status = false, Message = "Phone number already verified." };
+
+            var token = new CustomerToken()
+            {
+                CustomerId = customerExist.CustomerId,
+                DateCreated = DateTime.Now,
+                ExpiryDate = DateTime.Now.AddDays(_appSettings.ExpireInDays),
+                IsUsed = false,
+                TheToken = GenerateOTP(),
+                StatusOperation = tokenGenerationReason
+            };
+            await _dataContext.CustomerTokens.AddAsync(token);
+            var created = 0;
+            try
+            {
+                created = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (created <= 0)
+                return new GenericResponse { Status = false, Message = "Couldn't generate OTP" };
+
+            var termiiResponse = await SendSms(phoneNumber, token.TheToken);
+
+            if (termiiResponse.Code.ToLower() == "ok")
+                return new GenericResponse { Status = true, Message = "OTP has been sent to your phone number." };
+
+            return new GenericResponse { Status = false, Message = "Couldn't resend OTP." };
         }
 
         public string GenerateOTP()
@@ -335,6 +482,22 @@ namespace OK_OnBoarding.Services
             }
             otp = otp.Substring(0, lengthOfOTP);
             return otp;
+        }
+
+        public async Task<TermiiResponse> SendSms(string phoneNumber, string theToken)
+        {
+            // Send Sms 
+            var termiiRequest = new TermiiRequest()
+            {
+                To = phoneNumber,
+                From = _termiiAuthSettings.SenderId,
+                Sms = _appSettings.AccountCreationOTPMsg.Replace("{TOKEN}", theToken),
+                Type = _termiiAuthSettings.Type,
+                Channel = _termiiAuthSettings.Channel,
+                ApiKey = _termiiAuthSettings.ApiKey
+            };
+            var termiiResponse = await ApiHelper.DoWebRequestAsync<TermiiResponse>(_termiiAuthSettings.Url, termiiRequest, "post");
+            return termiiResponse;
         }
     }
 }

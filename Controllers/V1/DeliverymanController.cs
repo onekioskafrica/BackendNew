@@ -1,11 +1,13 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using OK_OnBoarding.Contracts;
 using OK_OnBoarding.Contracts.V1.Requests;
 using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Entities;
 using OK_OnBoarding.ExternalContract;
+using OK_OnBoarding.Helpers;
 using OK_OnBoarding.Services;
 using System;
 using System.Collections.Generic;
@@ -28,6 +30,7 @@ namespace OK_OnBoarding.Controllers.V1
             _otpService = otpService;
         }
 
+        
         [AllowAnonymous]
         [HttpPost(ApiRoute.Deliveryman.Signup)]
         public async Task<IActionResult> Signup([FromBody] DeliverymanSignUpRequest model)
@@ -104,6 +107,15 @@ namespace OK_OnBoarding.Controllers.V1
 
         }
 
+        [HttpPost(ApiRoute.Deliveryman.ResendOTP)]
+        public async Task<IActionResult> ResendOTP([FromBody] ResendOTPRequest request)
+        {
+            var genericResponse = await _otpService.ResendOTPForDeliveryman(OTPGenerationReason.OTPGENERATION_RESEND.ToString(), request.PhoneNumber, request.Email);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
         [HttpPut(ApiRoute.Deliveryman.UpdateAddress)]
         public async Task<IActionResult> UpdateAddress([FromBody] UpdateAddressRequest request)
         {
@@ -153,5 +165,6 @@ namespace OK_OnBoarding.Controllers.V1
                 return BadRequest(genericResponse);
             return Ok(genericResponse);
         }
+
     }
 }
