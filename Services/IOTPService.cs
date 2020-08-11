@@ -14,6 +14,12 @@ namespace OK_OnBoarding.Services
         Task<GenericResponse> VerifyOTPForStoreOwner(string OTP, string PhoneNumber);
         Task<GenericResponse> VerifyOTPForDeliveryman(string OTP, string PhoneNumber);
         Task<GenericResponse> VerifyOTPForCustomer(string OTP, string PhoneNumber);
+        Task<GenericResponse> ResendOTPForStoreOwner(string tokenGenerationReason, string phoneNumber, string email);
+        Task<GenericResponse> ResendOTPForDeliveryman(string tokenGenerationReason, string phoneNumber, string email);
+        Task<GenericResponse> ResendOTPForCustomer(string tokenGenerationReason, string phoneNumber, string email);
+        Task<GenericResponse> SendOTPToDeliverymanForPasswordReset(string tokenGenerationReason, string email);
+        Task<GenericResponse> SendOTPToStoreOwnerForPasswordReset(string tokenGenerationReason, string email);
+        Task<GenericResponse> SendOTPToCustomerForPasswordReset(string tokenGenerationReason, string email);
         string GenerateOTP();
     }
 }

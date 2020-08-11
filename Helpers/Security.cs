@@ -52,6 +52,7 @@ namespace OK_OnBoarding.Helpers
         {
             if (password == null) throw new ArgumentNullException("password");
             if (string.IsNullOrWhiteSpace(password)) throw new ArgumentException("Password cannot be whitespace or empty.Only string");
+            if (storedHash == null) throw new ArgumentException("Try log in with either Facebook or Google");
             if (storedHash.Length != 64) throw new ArgumentException("Invalid Lenght of Password hash. 64 bytes expected.");
             if (storedSalt.Length != 128) throw new ArgumentException("Invalid Length of Password salt. 128 bytes expected.");
 

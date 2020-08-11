@@ -14,7 +14,7 @@ namespace OK_OnBoarding.Services
         Task<AuthenticationResponse> CreateSuperAdminAsync(SuperAdmin superAdmin, string password);
         Task<GenericResponse> SuperAdminChangePasswordAsync(int superAdminId, string oldPassword, string newPassword);
         Task<AuthenticationResponse> LoginSuperAdminAsync(string email, string password);
-        Task<GenericResponse> CreateAdminAsync(Admin admin, string password);
+        Task<GenericResponse> CreateAdminAsync(Admin admin);
         Task<GenericResponse> ChangePassword(SuperAdminChangePasswordRequest request);
         Task<GenericResponse> DeactivateAdminAsync(Guid adminId);
         Task<GenericResponse> GetAllPrivilegesAsync();

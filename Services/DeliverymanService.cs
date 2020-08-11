@@ -44,6 +44,47 @@ namespace OK_OnBoarding.Services
             _s3BucketOptions = s3BucketOptions;
         }
 
+        public async Task<GenericResponse> ResetPassword(ForgotPasswordRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.OTP))
+                return new GenericResponse { Status = false, Message = "Email and OTP cannot be empty." };
+
+            var deliverymanExist = await _dataContext.DeliveryMen.FirstOrDefaultAsync(d => d.Email == request.Email);
+            if (deliverymanExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Deliveryman Email." };
+
+            var otpResponse = await _otpService.VerifyOTPForDeliveryman(request.OTP, deliverymanExist.PhoneNumber);
+            if (!otpResponse.Status)
+                return new GenericResponse { Status = false, Message = otpResponse.Message };
+
+            byte[] passwordHash, passwordSalt;
+            try
+            {
+                Security.CreatePasswordHash(request.Password, out passwordHash, out passwordSalt);
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred."  };
+            }
+
+            deliverymanExist.PasswordHash = passwordHash;
+            deliverymanExist.PasswordSalt = passwordSalt;
+            _dataContext.Entry(deliverymanExist).State = EntityState.Modified;
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (updated <= 0)
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+
+            return new GenericResponse { Status = true, Message = "Password Changed." };
+        }
+
         public async Task<AuthenticationResponse> CreateDeliverymanAsync(Deliveryman deliveryman, string password)
         {
             if (string.IsNullOrWhiteSpace(deliveryman.FirstName) || string.IsNullOrWhiteSpace(deliveryman.LastName) || string.IsNullOrWhiteSpace(deliveryman.Email))
@@ -74,12 +115,21 @@ namespace OK_OnBoarding.Services
             deliveryman.DateRegistered = DateTime.Now;
 
             await _dataContext.DeliveryMen.AddAsync(deliveryman);
-            var created = await _dataContext.SaveChangesAsync();
+            var created = 0;
+            try
+            {
+                created = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new AuthenticationResponse { Errors = new[] { "Error Occurred" } };
+            }
+            
             if (created <= 0)
             {
                 return new AuthenticationResponse { Errors = new[] { "Failed to register deliveryman." } };
             }
-            var genericResponse = await _otpService.GenerateOTPForDeliveryman(OTPGenerationReason.TokenGeneration.ToString(), deliveryman.PhoneNumber, deliveryman.Email);
+            var genericResponse = await _otpService.GenerateOTPForDeliveryman(OTPGenerationReason.OTPGENERATION_FOR_SIGN_UP.ToString(), deliveryman.PhoneNumber, deliveryman.Email);
             if (genericResponse.Status)
             {
                 // Send Sms
@@ -218,25 +268,40 @@ namespace OK_OnBoarding.Services
             if(!deliveryman.IsVerified)
                 return new AuthenticationResponse { Errors = new[] { "Please verify with OTP sent to your phone." } };
 
+            var isUpdateComplete = true;
+
+            if (string.IsNullOrWhiteSpace(deliveryman.AccountNumber) || string.IsNullOrWhiteSpace(deliveryman.Line1) || string.IsNullOrWhiteSpace(deliveryman.GovernmentIssuedIDBack))
+                isUpdateComplete = false;
+
             bool isPasswordCorrect = false;
             try
             {
                 isPasswordCorrect = Security.VerifyPassword(password, deliveryman.PasswordHash, deliveryman.PasswordSalt);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return new AuthenticationResponse { Errors = new[] { "Error Occurred." } };
+                return new AuthenticationResponse { Errors = new[] { ex.Message } };
             }
             if(!isPasswordCorrect)
                 return new AuthenticationResponse { Errors = new[] { "Deliveryman Email/Password is not correct." } };
 
             deliveryman.LastLoginDate = DateTime.Now;
             _dataContext.Entry(deliveryman).State = EntityState.Modified;
-            var updated = await _dataContext.SaveChangesAsync();
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new AuthenticationResponse { Errors = new[] { "Error Occurred" } }; 
+            }
+                
             if(updated <= 0)
                 return new AuthenticationResponse { Errors = new[] { "Failed to signin." } };
 
             var userData = _mapper.Map<UserDataResponse>(deliveryman);
+            userData.IsUpdateComplete = isUpdateComplete;
 
             var token = GenerateAuthenticationTokenForDeliveryman(deliveryman);
             return new AuthenticationResponse { Success = true, Token = token, Data = userData };

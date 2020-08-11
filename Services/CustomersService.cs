@@ -119,10 +119,10 @@ namespace OK_OnBoarding.Services
             {
                 return new AuthenticationResponse { Errors = new[] { "Failed to register customer." } };
             }
-            var genericResponse = await _otpService.GenerateOTPForCustomer(OTPGenerationReason.TokenGeneration.ToString(), customer.PhoneNumber, customer.Email);
+            var genericResponse = await _otpService.GenerateOTPForCustomer(OTPGenerationReason.OTPGENERATION_FOR_SIGN_UP.ToString(), customer.PhoneNumber, customer.Email);
             if (genericResponse.Status)
             {
-                // Send Sms
+                // Send Sms 
                 var termiiRequest = new TermiiRequest()
                 {
                     To = customer.PhoneNumber,
@@ -211,14 +211,18 @@ namespace OK_OnBoarding.Services
             if(!customer.IsVerified)
                 return new AuthenticationResponse { Errors = new[] { "Please verify with the otp sent to your phone." } };
 
+            var isUpdateComplete = true;
+            if (string.IsNullOrWhiteSpace(customer.Line1))
+                isUpdateComplete = false;
+
             bool isPasswordCorrect = false;
             try
             {
                 isPasswordCorrect = Security.VerifyPassword(password, customer.PasswordHash, customer.PasswordSalt);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return new AuthenticationResponse { Errors = new[] { "Error Occurred." } };
+                return new AuthenticationResponse { Errors = new[] { ex.Message } };
             }
             if (!isPasswordCorrect)
                 return new AuthenticationResponse { Errors = new[] { "Customer Email/Password is not correct." } };
@@ -230,6 +234,7 @@ namespace OK_OnBoarding.Services
                 return new AuthenticationResponse { Errors = new[] { "Failed to signin." } };
 
             var userData = _mapper.Map<CustomerUserDataResponse>(customer);
+            userData.IsUpdateComplete = isUpdateComplete;
 
             var token = GenerateAuthenticationTokenForCustomer(customer);
             return new AuthenticationResponse { Success = true, Token = token, Data = userData };

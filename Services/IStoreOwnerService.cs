@@ -1,4 +1,5 @@
-﻿using OK_OnBoarding.Domains;
+﻿using OK_OnBoarding.Contracts.V1.Responses;
+using OK_OnBoarding.Domains;
 using OK_OnBoarding.Entities;
 using OK_OnBoarding.ExternalContract;
 using System;

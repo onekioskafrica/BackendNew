@@ -12,6 +12,7 @@ namespace OK_OnBoarding.Entities
     {
         [Key]
         public Guid Id { get; set; }
+
         [ForeignKey("StoreOwner")]
         public Guid StoreOwnerId { get; set; }
         public string StoreId { get; set; }
@@ -28,5 +29,7 @@ namespace OK_OnBoarding.Entities
         public StoreOwner StoreOwner { get; set; } //Owner of Store
         public StoresBankAccount StoresBankAccount { get; set; }
         public StoresBusinessInformation StoresBusinessInformation { get; set; }
+        public ICollection<Product> Products { get; set; } //All the Products in this store
+        
     }
 }

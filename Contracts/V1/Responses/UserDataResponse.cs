@@ -25,5 +25,14 @@ namespace OK_OnBoarding.Contracts.V1.Responses
 
         [JsonPropertyName("last_name")]
         public string LastName { get; set; }
+
+        [JsonPropertyName("is_google_registered")]
+        public bool IsGoogleRegistered { get; set; }
+
+        [JsonPropertyName("is_facebook_registered")]
+        public bool IsFacebookRegistered { get; set; }
+
+        [JsonPropertyName("is_update_complete")]
+        public bool IsUpdateComplete { get; set; }
     }
 }

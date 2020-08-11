@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Amazon.S3;
 using AutoMapper;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.EntityFrameworkCore;
@@ -30,6 +31,7 @@ namespace OK_OnBoarding
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
             services.AddCors(c =>
             {
                 c.AddPolicy("AllowAll", options => {
@@ -38,6 +40,7 @@ namespace OK_OnBoarding
                     .AllowAnyMethod();
                  });
             });
+
             services.InstallServicesInAssembly(Configuration);
             services.AddAutoMapper(typeof(Startup));
             services.AddControllersWithViews();
@@ -62,7 +65,6 @@ namespace OK_OnBoarding
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-
             //app.UseHttpsRedirection();
             app.Use((context, next) =>
             {
@@ -72,7 +74,7 @@ namespace OK_OnBoarding
                     context.Response.Headers.Add("Access-Control-Allow-Headers", new[] { "Origin, X-Requested-With, Content-Type,contentType, Accept, Authorization" });
                     context.Response.Headers.Add("Access-Control-Allow-Methods", new[] { "GET, POST, PUT, DELETE, OPTIONS" });
                     context.Response.Headers.Add("Access-Control-Allow-Credentials", new[] { "true" });
-
+                    context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
                 }
                 return next.Invoke();
             });

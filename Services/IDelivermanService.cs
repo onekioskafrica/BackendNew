@@ -12,6 +12,8 @@ namespace OK_OnBoarding.Services
 {
     public interface IDelivermanService
     {
+        Task<GenericResponse> ResetPassword(ForgotPasswordRequest request);
+
         Task<AuthenticationResponse> GoogleLoginDeliverymanAsync(GoogleAuthRequest request);
         Task<AuthenticationResponse> CreateDeliverymanAsync(Deliveryman deliveryman, string password);
         Task<AuthenticationResponse> LoginDeliverymanAsync(string email, string password);

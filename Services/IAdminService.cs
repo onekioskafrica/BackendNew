@@ -13,7 +13,7 @@ namespace OK_OnBoarding.Services
     public interface IAdminService
     {
         Task<AuthenticationResponse> LoginAdminAsync(string email, string password);
-        Task<GenericResponse> CreateAdminAsync(Admin admin, string password, Guid callerId);
+        Task<GenericResponse> CreateAdminAsync(Admin admin, Guid callerId);
         Task<GenericResponse> ChangePassword(AdminChangePasswordRequest request);
         Task<List<Store>> GetAllStoresAsync(PaginationFilter paginationFilter = null);
         Task<List<Store>> GetAllActivatedStoresAsync(PaginationFilter paginationFilter = null);
@@ -29,5 +29,6 @@ namespace OK_OnBoarding.Services
         Task<GenericResponse> GetAdminDetailsByIdAsync(Guid AdminId);
         Task<GenericResponse> ActivateAdminAsync(ActivateAdminRequest request);
         Task<GenericResponse> CreateProductCategoryAsync(Category category, Guid adminId);
+        Task<GenericResponse> CreateProductTypeAsync(string productType, Guid adminId);
     }
 }

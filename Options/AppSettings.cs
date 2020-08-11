@@ -9,6 +9,7 @@ namespace OK_OnBoarding.Helpers
     {
         public int LengthOfStoreId { get; set; }
         public int LengthOfOTP { get; set; }
+        public int LengthOfGeneratedPassword { get; set; }
         public int ExpireInDays { get; set; }
         public string AccountCreationOTPMsg { get; set; }
     }
