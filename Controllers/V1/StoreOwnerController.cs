@@ -99,6 +99,26 @@ namespace OK_OnBoarding.Controllers.V1
             return Ok(new AuthSuccessResponse { Token = authResponse.Token, Data = authResponse.Data });
         }
 
+        [AllowAnonymous]
+        [HttpGet(ApiRoute.StoreOwner.SendOTPForForgotPassword)]
+        public async Task<IActionResult> SendOTPForForgotPassword([FromQuery] string email)
+        {
+            var genericResponse = await _otpService.SendOTPToStoreOwnerForPasswordReset(OTPGenerationReason.OTPGENERATION_FORGOTPASSWORD.ToString(), email);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [AllowAnonymous]
+        [HttpPost(ApiRoute.StoreOwner.ForgotPassword)]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            var genericResponse = await _storeOwnerService.ResetPassword(request);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
         [HttpPost(ApiRoute.StoreOwner.EnableStoreOwnerCreation)]
         public async Task<IActionResult> EnableStoreOwnerCreation([FromBody] EnableUserCreationRequest request)
         {

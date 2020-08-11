@@ -13,6 +13,7 @@ namespace OK_OnBoarding.Services
 {
     public interface ICustomersService
     {
+        Task<GenericResponse> ResetPassword(ForgotPasswordRequest request);
         Task<AuthenticationResponse> GoogleLoginCustomerAsync(GoogleAuthRequest request);
         Task<AuthenticationResponse> CreateCustomerAsync(Customer customer, string password);
         Task<AuthenticationResponse> LoginCustomerAsync(string email, string password);

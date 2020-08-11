@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using OK_OnBoarding.Contracts.V1.Requests;
 using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Data;
 using OK_OnBoarding.Domains;
@@ -37,6 +38,47 @@ namespace OK_OnBoarding.Services
             _mapper = mapper;
             _termiiAuthSettings = termiiAuthSettings;
             _appSettings = appSettings;
+        }
+
+        public async Task<GenericResponse> ResetPassword(ForgotPasswordRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.OTP))
+                return new GenericResponse { Status = false, Message = "Email and OTP cannot be empty." };
+
+            var storeOwnerExist = await _dataContext.StoreOwners.FirstOrDefaultAsync(d => d.Email == request.Email);
+            if (storeOwnerExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid StoreOwner Email." };
+
+            var otpResponse = await _otpService.VerifyOTPForStoreOwner(request.OTP, storeOwnerExist.PhoneNumber);
+            if (!otpResponse.Status)
+                return new GenericResponse { Status = false, Message = otpResponse.Message };
+
+            byte[] passwordHash, passwordSalt;
+            try
+            {
+                Security.CreatePasswordHash(request.Password, out passwordHash, out passwordSalt);
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+
+            storeOwnerExist.PasswordHash = passwordHash;
+            storeOwnerExist.PasswordSalt = passwordSalt;
+            _dataContext.Entry(storeOwnerExist).State = EntityState.Modified;
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (updated <= 0)
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+
+            return new GenericResponse { Status = true, Message = "Password Changed." };
         }
 
         public async Task<AuthenticationResponse> CreateStoreOwnerAsync(StoreOwner storeOwner, string password)
