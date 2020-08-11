@@ -388,6 +388,43 @@ namespace OK_OnBoarding.Services
 
         }
 
+        public async Task<GenericResponse> SendOTPToDeliverymanForPasswordReset(string tokenGenerationReason, string email)
+        {
+            var deliverymanExist = await _dataContext.DeliveryMen.Where(d => d.Email == email).Select(d => new Deliveryman { Id = d.Id, PhoneNumber = d.PhoneNumber }).FirstOrDefaultAsync();
+
+            if (deliverymanExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Phonenumber" };
+
+            var token = new DeliverymanToken()
+            {
+                DeliverymanId = deliverymanExist.Id,
+                DateCreated = DateTime.Now,
+                ExpiryDate = DateTime.Now.AddDays(_appSettings.ExpireInDays),
+                IsUsed = false,
+                TheToken = GenerateOTP(),
+                StatusOperation = tokenGenerationReason
+            };
+            await _dataContext.DeliverymenTokens.AddAsync(token);
+            var created = 0;
+            try
+            {
+                created = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (created <= 0)
+                return new GenericResponse { Status = false, Message = "Couldn't generate OTP" };
+
+            var termiiResponse = await SendSms(deliverymanExist.PhoneNumber, token.TheToken);
+
+            if (termiiResponse.Code.ToLower() == "ok")
+                return new GenericResponse { Status = true, Message = "OTP has been sent to your phone number." };
+
+            return new GenericResponse { Status = false, Message = "Couldn't resend OTP." };
+        }
+
         public async Task<GenericResponse> ResendOTPForDeliveryman(string tokenGenerationReason, string phoneNumber, string email)
         {
             var deliverymanExist = await _dataContext.DeliveryMen.Where(d => d.Email == email && d.PhoneNumber == phoneNumber).Select(d => new Deliveryman { Id = d.Id, IsVerified = d.IsVerified }).FirstOrDefaultAsync();
@@ -498,6 +535,16 @@ namespace OK_OnBoarding.Services
             };
             var termiiResponse = await ApiHelper.DoWebRequestAsync<TermiiResponse>(_termiiAuthSettings.Url, termiiRequest, "post");
             return termiiResponse;
+        }
+
+        public Task<GenericResponse> SendOTPToStoreOwnerForPasswordReset(string tokenGenerationReason, string email)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<GenericResponse> SendOTPToCustomerForPasswordReset(string tokenGenerationReason, string email)
+        {
+            throw new NotImplementedException();
         }
     }
 }

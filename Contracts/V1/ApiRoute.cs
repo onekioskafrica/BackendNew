@@ -77,6 +77,8 @@ namespace OK_OnBoarding.Contracts
             public const string UploadDoc = Base + "/deliverymen/uploaddocuments";
             public const string AddCompanyDetails = Base + "/deliverymen/addcompanydetails";
             public const string ResendOTP = Base + "/deliverymen/resendotp";
+            public const string SendOTPForForgotPassword = Base + "/deliverymen/sendotpforforgotpassword";
+            public const string ForgotPassword = Base + "/deliverymen/forgotpassword";
         }
 
         public static class SuperAdmin

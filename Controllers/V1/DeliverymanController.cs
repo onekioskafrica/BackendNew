@@ -116,6 +116,26 @@ namespace OK_OnBoarding.Controllers.V1
             return Ok(genericResponse);
         }
 
+        [AllowAnonymous]
+        [HttpGet(ApiRoute.Deliveryman.SendOTPForForgotPassword)]
+        public async Task<IActionResult> SendOTPForForgotPassword([FromQuery] string email)
+        {
+            var genericResponse = await _otpService.SendOTPToDeliverymanForPasswordReset(OTPGenerationReason.OTPGENERATION_FORGOTPASSWORD.ToString(), email);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [AllowAnonymous]
+        [HttpPost(ApiRoute.Deliveryman.ForgotPassword)]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            var genericResponse = await _delivermanService.ResetPassword(request);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
         [HttpPut(ApiRoute.Deliveryman.UpdateAddress)]
         public async Task<IActionResult> UpdateAddress([FromBody] UpdateAddressRequest request)
         {
