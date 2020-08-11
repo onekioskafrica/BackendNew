@@ -74,7 +74,6 @@ namespace OK_OnBoarding
                     context.Response.Headers.Add("Access-Control-Allow-Headers", new[] { "Origin, X-Requested-With, Content-Type,contentType, Accept, Authorization" });
                     context.Response.Headers.Add("Access-Control-Allow-Methods", new[] { "GET, POST, PUT, DELETE, OPTIONS" });
                     context.Response.Headers.Add("Access-Control-Allow-Credentials", new[] { "true" });
-                    context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
                 }
                 return next.Invoke();
             });
