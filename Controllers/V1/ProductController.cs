@@ -111,5 +111,23 @@ namespace OK_OnBoarding.Controllers
             };
             return Ok(paginationResponse);
         }
+
+        [HttpGet(ApiRoute.Products.GetProductsByCategory)]
+        public async Task<IActionResult> GetProductsByCategory([FromQuery] [Required] int categoryId, PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+            var allProductByCategory = await _productService.GetProductsByCategoryAsync(categoryId, pagination);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<Product>(allProductByCategory));
+
+            var paginationResponse = new PagedResponse<Product>
+            {
+                Data = allProductByCategory,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
+            };
+            return Ok(paginationResponse);
+        }
     }
 }

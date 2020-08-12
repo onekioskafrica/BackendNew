@@ -14,8 +14,13 @@ namespace OK_OnBoarding.Entities
 
         [ForeignKey("Product")]
         public Guid ProductId { get; set; }
+
+        [ForeignKey("Category")]
         public int CategoryId { get; set; }
 
+        public string CategoryTitle { get; set; }
+
         public Product Product { get; set; }
+        public Category Category { get; set; }
     }
 }

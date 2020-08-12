@@ -40,11 +40,14 @@ namespace OK_OnBoarding.Services
 
             var product = _mapper.Map<Product>(request);
             var categoryIds = request.CategoryIds;
-            var thisProductCategories = new ProductCategory[categoryIds.Length];
 
-            for (int i = 0; i < categoryIds.Length; i++)
+            var theCategories = await _dataContext.Categories.Where(c => categoryIds.Contains(c.Id)).ToArrayAsync<Category>();
+            var thisProductCategories = new ProductCategory[theCategories.Length];
+
+            for (int i = 0; i < theCategories.Length; i++)
             {
-                thisProductCategories[i] = new ProductCategory { ProductId = product.Id, CategoryId = categoryIds[i] };
+                var thisCategory = theCategories[i];
+                thisProductCategories[i] = new ProductCategory { ProductId = product.Id, CategoryId = thisCategory.Id, CategoryTitle = thisCategory.Title };
             }
 
             product.ProductCategories = thisProductCategories;
@@ -119,9 +122,22 @@ namespace OK_OnBoarding.Services
             return new GenericResponse { Status = true, Message = "Success", Data = product };
         }
 
-        public Task<List<Product>> GetProductsByCategoryAsync(int categoryId, PaginationFilter pagination = null)
+        public  async Task<List<Product>> GetProductsByCategoryAsync(int categoryId, PaginationFilter paginationFilter = null)
         {
-            throw new NotImplementedException();
+            List<Guid> allProductIDsByCategory = null;
+            List<Product> allProductsByCategory = null;
+            if(paginationFilter == null)
+            {
+                allProductIDsByCategory = await _dataContext.ProductCategories.Where(pc => pc.CategoryId == categoryId).Select(pc => pc.ProductId).ToListAsync();
+                allProductsByCategory = await _dataContext.Products.Include(p => p.ProductCategories).Include(p => p.ProductImages).Include(p => p.ProductPricing).Where(p => allProductIDsByCategory.Contains(p.Id) && p.IsActive && p.IsVisible).ToListAsync<Product>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allProductIDsByCategory = await _dataContext.ProductCategories.Where(pc => pc.CategoryId == categoryId).Select(pc => pc.ProductId).ToListAsync();
+                allProductsByCategory = await _dataContext.Products.Include(p => p.ProductCategories).Include(p => p.ProductImages).Include(p => p.ProductPricing).Where(p => allProductIDsByCategory.Contains(p.Id) && p.IsActive && p.IsVisible).Skip(skip).Take(paginationFilter.PageSize).ToListAsync<Product>();
+            }
+            return allProductsByCategory;
         }
 
         public async Task<List<Product>> GetProductsByStoreAsync(Guid storeId, PaginationFilter paginationFilter = null)
