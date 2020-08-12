@@ -1,4 +1,5 @@
-﻿using OK_OnBoarding.Contracts.V1.Responses;
+﻿using OK_OnBoarding.Contracts.V1.Requests;
+using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Domains;
 using OK_OnBoarding.Entities;
 using OK_OnBoarding.ExternalContract;
@@ -11,6 +12,7 @@ namespace OK_OnBoarding.Services
 {
     public interface IStoreOwnerService
     {
+        Task<GenericResponse> ResetPassword(ForgotPasswordRequest request);
         Task<AuthenticationResponse> GoogleLoginStoreOwnerAsync(GoogleAuthRequest request);
         Task<AuthenticationResponse> CreateStoreOwnerAsync(StoreOwner storeOwner, string password);
         Task<AuthenticationResponse> LoginStoreOwnerAsync(string email, string password);

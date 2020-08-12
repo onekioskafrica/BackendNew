@@ -12,7 +12,5 @@ namespace OK_OnBoarding.Contracts.V1.Requests
         [DataType(DataType.EmailAddress)]
         public string Email { get; set; }
 
-        [Required]
-        public string PhoneNumber { get; set; }
     }
 }

@@ -42,6 +42,8 @@ namespace OK_OnBoarding.Services
             var storeOwnerExist = await _dataContext.StoreOwners.FirstOrDefaultAsync(s => s.Id == store.StoreOwnerId);
             if (storeOwnerExist == null)
                 return new GenericResponse { Status = false, Message = "Invalid StoreOwner" };
+            if (!storeOwnerExist.IsVerified)
+                return new GenericResponse { Status = false, Message = "Please verify with the OTP sent to your phone." };
 
             store.StoreId = GenerateStoreId(_appSettings.LengthOfStoreId);
             store.DateCreated = DateTime.Now;

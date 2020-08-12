@@ -44,6 +44,47 @@ namespace OK_OnBoarding.Services
             _appSettings = appSettings;
         }
 
+        public async Task<GenericResponse> ResetPassword(ForgotPasswordRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.OTP))
+                return new GenericResponse { Status = false, Message = "Email and OTP cannot be empty." };
+
+            var customerExist = await _dataContext.Customers.FirstOrDefaultAsync(d => d.Email == request.Email);
+            if (customerExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Customer Email." };
+
+            var otpResponse = await _otpService.VerifyOTPForCustomer(request.OTP, customerExist.PhoneNumber);
+            if (!otpResponse.Status)
+                return new GenericResponse { Status = false, Message = otpResponse.Message };
+
+            byte[] passwordHash, passwordSalt;
+            try
+            {
+                Security.CreatePasswordHash(request.Password, out passwordHash, out passwordSalt);
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+
+            customerExist.PasswordHash = passwordHash;
+            customerExist.PasswordSalt = passwordSalt;
+            _dataContext.Entry(customerExist).State = EntityState.Modified;
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (updated <= 0)
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+
+            return new GenericResponse { Status = true, Message = "Password Changed." };
+        }
+
         public async Task<AuthenticationResponse> GoogleLoginCustomerAsync(GoogleAuthRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.FirstName) || string.IsNullOrWhiteSpace(request.LastName) || string.IsNullOrWhiteSpace(request.Email))

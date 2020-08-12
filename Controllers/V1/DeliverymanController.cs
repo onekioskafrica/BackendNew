@@ -110,7 +110,7 @@ namespace OK_OnBoarding.Controllers.V1
         [HttpPost(ApiRoute.Deliveryman.ResendOTP)]
         public async Task<IActionResult> ResendOTP([FromBody] ResendOTPRequest request)
         {
-            var genericResponse = await _otpService.ResendOTPForDeliveryman(OTPGenerationReason.OTPGENERATION_RESEND.ToString(), request.PhoneNumber, request.Email);
+            var genericResponse = await _otpService.ResendOTPForDeliveryman(OTPGenerationReason.OTPGENERATION_RESEND.ToString(), request.Email);
             if (!genericResponse.Status)
                 return BadRequest(genericResponse);
             return Ok(genericResponse);
