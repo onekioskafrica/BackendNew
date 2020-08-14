@@ -96,6 +96,7 @@ namespace OK_OnBoarding.Data
         public DbSet<CustomerToken> CustomerTokens { get; set; }
         public DbSet<Deliveryman> DeliveryMen { get; set; }
         public DbSet<DeliverymanToken> DeliverymenTokens { get; set; }
+        public DbSet<Error> ErrorLogs { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<Privilege> Priviliges { get; set; }
         public DbSet<Product> Products { get; set; }
