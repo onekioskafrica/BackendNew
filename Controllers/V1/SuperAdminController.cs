@@ -85,7 +85,7 @@ namespace OK_OnBoarding.Controllers.V1
             return Ok(genericResponse);
         }
 
-        [Authorize(Roles = Roles.SuperAdmin)]
+        [Authorize(Roles = Roles.SuperAdmin + "," + Roles.Admin)]
         [HttpGet(ApiRoute.SuperAdmin.GetAllPrivileges)]
         public async Task<IActionResult> GetAllPrivileges()
         {

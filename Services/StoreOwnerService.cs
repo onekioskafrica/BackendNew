@@ -276,6 +276,82 @@ namespace OK_OnBoarding.Services
             return new AuthenticationResponse { Success = true, Token = token, Data = userData };
         }
 
+        public async Task<GenericResponse> CloseStoreAsync(CloseStoreRequest request)
+        {
+            var storeExist = await _dataContext.Stores.Include(s => s.StoreOwner).FirstOrDefaultAsync(s => s.Id == request.StoreId);
+            if (storeExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Store" };
+            if (storeExist.StoreOwner.Id != request.StoreOwnerId)
+                return new GenericResponse { Status = false, Message = "Store not owned by store owner." };
+
+            storeExist.IsClosed = request.IsClosed;
+            _dataContext.Entry(storeExist).State = EntityState.Modified;
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (updated <= 0)
+                return new GenericResponse { Status = false, Message = "Unable to close store." };
+
+            // Log to StoreOwnerActivityLogs {Hangfire}
+            await _dataContext.StoreOwnerActivityLogs.AddAsync(new StoreOwnerActivityLog { StoreId = request.StoreId, StoreOwnerId = request.StoreOwnerId, Action = request.IsClosed ? StoreOwnerActionsEnum.STORE_CLOSURE.ToString() : StoreOwnerActionsEnum.OPEN_STORE.ToString(), DateOfAction = DateTime.Now });
+
+            try
+            {
+                await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                //Do Nothing
+            }
+
+            return new GenericResponse { Status = true, Message = "Store Closed Successfully." };
+        }
+
+        public async Task<GenericResponse> SetProductVisibilityAsync(SetProductVisibilityRequest request)
+        {
+            var productExist = await _dataContext.Products.Include(p => p.Store).FirstOrDefaultAsync(p => p.Id == request.ProductId);
+            if(productExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Product" };
+            if (productExist.Store.StoreOwner.Id == request.StoreOwnerId)
+                return new GenericResponse { Status = false, Message = "Product not owned by Store Owner" };
+
+            productExist.IsVisible = request.IsVisible;
+            _dataContext.Entry(productExist).State = EntityState.Modified;
+
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (updated <= 0)
+                return new GenericResponse { Status = false, Message = "Failed to set product visiblity" };
+
+            // Log to StoreOwnerActivityLogs {Hangfire}
+            await _dataContext.StoreOwnerActivityLogs.AddAsync(new StoreOwnerActivityLog { ProductId = request.ProductId, StoreOwnerId = request.StoreOwnerId, Action = request.IsVisible ? StoreOwnerActionsEnum.OPEN_PRODUCT.ToString() : StoreOwnerActionsEnum.HIDE_PRODUCT.ToString(), DateOfAction = DateTime.Now });
+
+            try
+            {
+                await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                //Do Nothing
+            }
+
+            return new GenericResponse { Status = true, Message = "Product Hidden Successfully." };
+
+        }
+
         private string GenerateAuthenticationTokenForStoreOwner(StoreOwner storeOwner)
         {
             var claims = new[]

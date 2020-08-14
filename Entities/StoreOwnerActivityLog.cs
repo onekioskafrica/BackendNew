@@ -17,11 +17,14 @@ namespace OK_OnBoarding.Entities
 
         [ForeignKey("Store")]
         public Guid? StoreId { get; set; }
+
+        public Guid? ProductId { get; set; }
         public string Action { get; set; }
         public DateTime? DateOfAction { get; set; }
 
         public StoreOwner StoreOwner { get; set; }
         public Store Store { get; set; }
+        public Product Product { get; set; }
 
     }
 }

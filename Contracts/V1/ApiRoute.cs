@@ -30,6 +30,8 @@ namespace OK_OnBoarding.Contracts
             public const string GetAdminDetailsById = Base + "/admins/getadmindetailsby";
             public const string ActivateAdmin = Base + "/admins/activateadmin";
             public const string CreateProductCategory = Base + "/admins/createproductcategory";
+            public const string GetAllProducts = Base + "/admins/getallproducts";
+            public const string ActivateProduct = Base + "/admins/activateproduct";
         }
 
         public static class Products
@@ -67,6 +69,8 @@ namespace OK_OnBoarding.Contracts
             public const string ResendOTP = Base + "/storeowners/resendotp";
             public const string SendOTPForForgotPassword = Base + "/storeowners/sendotpforforgotpassword";
             public const string ForgotPassword = Base + "/storeowners/forgotpassword";
+            public const string CloseStore = Base + "/storeowners/closestore";
+            public const string SetProductVisibility = Base + "/storeowners/setproductvisibility";
         }
 
         public static class Deliveryman
