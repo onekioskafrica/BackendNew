@@ -279,6 +279,7 @@ namespace OK_OnBoarding.Controllers.V1
 
             if (!genericResponse.Status)
                 return BadRequest(genericResponse);
+
             return Ok(genericResponse);
         }
 
