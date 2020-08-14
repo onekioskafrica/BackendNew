@@ -11,6 +11,9 @@ namespace OK_OnBoarding.Contracts.V1.Requests
     public class CreateStoreBusinessInfoRequest
     {
         [Required]
+        public Guid StoreOwnerId { get; set; }
+
+        [Required]
         public Guid StoreId { get; set; }
 
         [Required]

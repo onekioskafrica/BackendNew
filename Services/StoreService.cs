@@ -92,7 +92,7 @@ namespace OK_OnBoarding.Services
             return response;
         }
 
-        public async Task<GenericResponse> UploadStoreBankDetailsAsync(StoresBankAccount storesBankAccount)
+        public async Task<GenericResponse> UploadStoreBankDetailsAsync(StoresBankAccount storesBankAccount, Guid StoreOwnerId)
         {
             GenericResponse response = new GenericResponse();
             if (string.IsNullOrWhiteSpace(storesBankAccount.Bank) || string.IsNullOrWhiteSpace(storesBankAccount.StoreId.ToString()) || string.IsNullOrWhiteSpace(storesBankAccount.AccountName) || string.IsNullOrWhiteSpace(storesBankAccount.AccountNumber))
@@ -101,6 +101,8 @@ namespace OK_OnBoarding.Services
             var storeExist = await _dataContext.Stores.FirstOrDefaultAsync(s => s.Id == storesBankAccount.StoreId);
             if (storeExist == null)
                 return new GenericResponse { Status = false, Message = "Invalid Store." };
+            if(storeExist.StoreOwnerId != StoreOwnerId)
+                return new GenericResponse { Status = false, Message = "This Store doesnt't belong to this storeowner." };
 
             await _dataContext.StoresBankAccounts.AddAsync(storesBankAccount);
             var created = 0;
@@ -127,7 +129,7 @@ namespace OK_OnBoarding.Services
             return response;
         }
 
-        public async Task<GenericResponse> UploadStoreBusinessInfoAsync(StoresBusinessInformation storesBusiness, IFormFile vatInfoFile)
+        public async Task<GenericResponse> UploadStoreBusinessInfoAsync(StoresBusinessInformation storesBusiness, IFormFile vatInfoFile, Guid StoreOwnerId)
         {
             GenericResponse response = new GenericResponse();
             if (string.IsNullOrWhiteSpace(storesBusiness.StoreId.ToString()) || string.IsNullOrWhiteSpace(storesBusiness.Line1) || string.IsNullOrWhiteSpace(storesBusiness.City) || string.IsNullOrWhiteSpace(storesBusiness.State) || string.IsNullOrWhiteSpace(storesBusiness.Country) || string.IsNullOrWhiteSpace(storesBusiness.PersonInCharge))
@@ -136,6 +138,8 @@ namespace OK_OnBoarding.Services
             var storeExist = await _dataContext.Stores.FirstOrDefaultAsync(s => s.Id == storesBusiness.StoreId);
             if (storeExist == null)
                 return new GenericResponse { Status = false, Message = "Invalid Store." };
+            if (storeExist.StoreOwnerId != StoreOwnerId)
+                return new GenericResponse { Status = false, Message = "This Store doesnt't belong to this storeowner." };
 
             string vatFileUrl = string.Empty;
             if (vatInfoFile != null)
