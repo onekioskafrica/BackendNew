@@ -12,8 +12,8 @@ namespace OK_OnBoarding.Services
     public interface IStoreService
     {
         Task<GenericResponse> CreateStoreBasicAsync(Store store, IFormFile logo);
-        Task<GenericResponse> UploadStoreBusinessInfoAsync(StoresBusinessInformation storesBusiness, IFormFile vatInfoFile);
-        Task<GenericResponse> UploadStoreBankDetailsAsync(StoresBankAccount storesBankAccount);
+        Task<GenericResponse> UploadStoreBusinessInfoAsync(StoresBusinessInformation storesBusiness, IFormFile vatInfoFile, Guid StoreOwnerId);
+        Task<GenericResponse> UploadStoreBankDetailsAsync(StoresBankAccount storesBankAccount, Guid StoreOwnerId);
         Task<GenericResponse> GetStoreByIdAsync(Guid storeId);
         Task<GenericResponse> GetStoreByStoreIdAsync(string storeId);
         Task<List<Store>> GetAllStoresByStoreOwnerIdAsync(Guid storeOwnerId, PaginationFilter paginationFilter = null);

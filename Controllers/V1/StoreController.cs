@@ -57,7 +57,7 @@ namespace OK_OnBoarding.Controllers.V1
             }
 
             var storeBizInfo = _mapper.Map<StoresBusinessInformation>(request);
-            var genericResponse = await _storeService.UploadStoreBusinessInfoAsync(storeBizInfo, request.VatInformationFile);
+            var genericResponse = await _storeService.UploadStoreBusinessInfoAsync(storeBizInfo, request.VatInformationFile, request.StoreOwnerId);
 
             if (!genericResponse.Status)
                 return BadRequest(genericResponse);
@@ -76,7 +76,7 @@ namespace OK_OnBoarding.Controllers.V1
             }
 
             var storeBankAcct = _mapper.Map<StoresBankAccount>(request);
-            var genericResponse = await _storeService.UploadStoreBankDetailsAsync(storeBankAcct);
+            var genericResponse = await _storeService.UploadStoreBankDetailsAsync(storeBankAcct, request.StoreOwnerId);
 
             if (!genericResponse.Status)
                 return BadRequest(genericResponse);
