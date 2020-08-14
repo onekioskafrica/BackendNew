@@ -128,6 +128,26 @@ namespace OK_OnBoarding.Controllers.V1
             return Ok(genericResponse);
         }
 
+        [Authorize(Roles = Roles.StoreOwner)]
+        [HttpPost(ApiRoute.StoreOwner.CloseStore)]
+        public async Task<IActionResult> CloseStore([FromBody] CloseStoreRequest request)
+        {
+            var genericResponse = await _storeOwnerService.CloseStoreAsync(request);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [Authorize(Roles = Roles.StoreOwner)]
+        [HttpPost(ApiRoute.StoreOwner.SetProductVisibility)]
+        public async Task<IActionResult> SetProductVisibility([FromBody] SetProductVisibilityRequest request)
+        {
+            var genericResponse = await _storeOwnerService.SetProductVisibilityAsync(request);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
         [HttpPost(ApiRoute.StoreOwner.ResendOTP)]
         public async Task<IActionResult> ResendOTP([FromBody] ResendOTPRequest request)
         {

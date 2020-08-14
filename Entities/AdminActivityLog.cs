@@ -21,6 +21,10 @@ namespace OK_OnBoarding.Entities
 
         [ForeignKey("Category")]
         public int? ProductCategoryId { get; set; }
+
+        [ForeignKey("Product")]
+        public Guid? ProductId { get; set; }
+
         public string Action { get; set; }
         public DateTime? DateOfAction { get; set; }
         public string ReasonOfAction { get; set; }
@@ -32,5 +36,6 @@ namespace OK_OnBoarding.Entities
         public Store Store { get; set; }
         public Deliveryman Deliveryman { get; set; }
         public Category Category { get; set; }
+        public Product Product { get; set; }
     }
 }

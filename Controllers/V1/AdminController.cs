@@ -49,6 +49,25 @@ namespace OK_OnBoarding.Controllers.V1
         }
 
         [Authorize(Roles = Roles.Admin)]
+        [HttpGet(ApiRoute.Admin.GetAllProducts)]
+        public async Task<IActionResult> GetAllProducts([FromQuery] PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+
+            var allProducts = await _adminService.GetAllProductsAsync(pagination);
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<Product>(allProducts));
+
+            var paginationResponse = new PagedResponse<Product>
+            {
+                Data = allProducts,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
+            };
+            return Ok(paginationResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
         [HttpGet(ApiRoute.Admin.GetAllStores)]
         public async Task<IActionResult> GetAllStores([FromQuery] PaginationQuery paginationQuery)
         {
@@ -105,6 +124,17 @@ namespace OK_OnBoarding.Controllers.V1
                 PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
             };
             return Ok(paginationResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpPut(ApiRoute.Admin.ActivateProduct)]
+        public async Task<IActionResult> ActivateProduct([FromBody] ActivateProductRequest request)
+        {
+            var genericResponse = await _adminService.ActivateProductAsync(request);
+
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
         }
 
         [Authorize(Roles = Roles.Admin)]

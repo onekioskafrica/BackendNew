@@ -93,10 +93,41 @@ namespace OK_OnBoarding.Services
                 return new GenericResponse { Status = false, Message = "Error Occurred." };
             }
             if (updated <= 0)
-                return new GenericResponse { Status = false, Message = "Failed to activate Deliveryman" };
+                return new GenericResponse { Status = false, Message = request.Activate ? "Failed to activate Deliveryman" : "Failed to deactivate Deliveryman" };
 
             // Insert into AdminActivity Log {Hangfire}
             await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { Action = request.Activate == false ? AdminActionsEnum.ADMIN_DEACTIVATE_DELIVERYMAN.ToString() : AdminActionsEnum.ADMIN_ACTIVATE_DELIVERYMAN.ToString(), DeliverymanId = request.DeliverymanId, ReasonOfAction = request.Reason, PerformerId = request.AdminId, DateOfAction = DateTime.Now });
+            await _dataContext.SaveChangesAsync();
+
+            return new GenericResponse { Status = true, Message = "Success" };
+        }
+
+        public async Task<GenericResponse> ActivateProductAsync(ActivateProductRequest request)
+        {
+            var productExist = await _dataContext.Products.FirstOrDefaultAsync(p => p.Id == request.ProductId);
+            if (productExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Store" };
+
+            var checkAdminResponse = await CheckAdmin(request.AdminId);
+            if (!checkAdminResponse.Status)
+                return checkAdminResponse;
+
+            productExist.IsActive = request.Activate;
+            _dataContext.Entry(productExist).State = EntityState.Modified;
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if(updated <= 0)
+                return new GenericResponse { Status = false, Message = request.Activate ? "Failed to activate Product" : "Failed to deactivate Product" };
+
+            // Insert into AdminActivity Log {Hangfire}
+            await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { Action = request.Activate == false ? AdminActionsEnum.ADMIN_DEACTIVATE_PRODUCT.ToString() : AdminActionsEnum.ADMIN_ACTIVATE_PRODUCT.ToString(), ProductId = request.ProductId, ReasonOfAction = request.Reason, PerformerId = request.AdminId, DateOfAction = DateTime.Now });
             await _dataContext.SaveChangesAsync();
 
             return new GenericResponse { Status = true, Message = "Success" };
@@ -124,7 +155,7 @@ namespace OK_OnBoarding.Services
                 return new GenericResponse { Status = false, Message = "Error Occurred." };
             }
             if (updated <= 0)
-                return new GenericResponse { Status = false, Message = "Failed to activate Store" };
+                return new GenericResponse { Status = false, Message = request.Activate ? "Failed to activate Store" : "Failed to deactivate Product" };
 
             // Insert into AdminActivity Log {Hangfire}
             await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { Action = request.Activate == false ? AdminActionsEnum.ADMIN_DEACTIVATE_STORE.ToString() : AdminActionsEnum.ADMIN_ACTIVATE_STORE.ToString(), StoreId = request.StoreId, ReasonOfAction = request.Reason, PerformerId = request.AdminId, DateOfAction = DateTime.Now });
@@ -325,11 +356,6 @@ namespace OK_OnBoarding.Services
             return new GenericResponse { Status = true, Message = "Category Successfully added.", Data = category };
         }
 
-        public Task<GenericResponse> CreateProductTypeAsync(string productType, Guid adminId)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task<GenericResponse> GetAdminDetailsByIdAsync(Guid AdminId)
         {
             var adminExist = await _dataContext.Admins.FirstOrDefaultAsync(a => a.AdminId == AdminId);
@@ -405,6 +431,22 @@ namespace OK_OnBoarding.Services
             }
             var allDeliverymenResponse = _mapper.Map<List<DeliverymanResponse>>(allDeliverymen);
             return allDeliverymenResponse;
+        }
+
+        public async Task<List<Product>> GetAllProductsAsync(PaginationFilter paginationFilter = null)
+        {
+            List<Product> allProducts = null;
+            if (paginationFilter == null)
+            {
+                allProducts = await _dataContext.Products.Include(p => p.ProductCategories).Include(p => p.ProductImages).Include(p => p.ProductPricing).ToListAsync<Product>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allProducts = await _dataContext.Products.Skip(skip).Take(paginationFilter.PageSize).Include(p => p.ProductCategories).Include(p => p.ProductImages).Include(p => p.ProductPricing).ToListAsync<Product>();
+            }
+
+            return allProducts;
         }
 
         public async Task<List<Store>> GetAllStoresAsync(PaginationFilter paginationFilter = null)
@@ -520,6 +562,17 @@ namespace OK_OnBoarding.Services
             var userData = _mapper.Map<AdminUserDataResponse>(admin);
             var token = GenerateAuthenticationTokenForAdmin(admin);
             return new AuthenticationResponse { Success = true, Token = token, Data = userData };
+        }
+
+        public async Task<GenericResponse> CheckAdmin(Guid AdminId)
+        {
+            var adminExist = await _dataContext.Admins.FirstOrDefaultAsync(a => a.AdminId == AdminId);
+            if (adminExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Admin" };
+            if (!adminExist.IsActive)
+                return new GenericResponse { Status = false, Message = "Inactive Admin" };
+
+            return new GenericResponse { Status = true, Message = "Success" };
         }
 
         public string GenerateAdminPassword(int length)

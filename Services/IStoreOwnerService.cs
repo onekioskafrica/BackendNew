@@ -17,5 +17,7 @@ namespace OK_OnBoarding.Services
         Task<AuthenticationResponse> CreateStoreOwnerAsync(StoreOwner storeOwner, string password);
         Task<AuthenticationResponse> LoginStoreOwnerAsync(string email, string password);
         Task<AuthenticationResponse> FacebookLoginStoreOwnerAsync(string accessToken);
+        Task<GenericResponse> CloseStoreAsync(CloseStoreRequest request);
+        Task<GenericResponse> SetProductVisibilityAsync(SetProductVisibilityRequest request);
     }
 }
