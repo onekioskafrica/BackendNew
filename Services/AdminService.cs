@@ -36,6 +36,10 @@ namespace OK_OnBoarding.Services
 
         public async Task<GenericResponse> ActivateAdminAsync(ActivateAdminRequest request)
         {
+            await _dataContext.ErrorLogs.AddAsync(new Error { DateOfLog = DateTime.Now, Message = $"Inside ActivateAdminAsync()" });
+            await _dataContext.SaveChangesAsync();
+
+
             var callerExist = await _dataContext.Admins.AsNoTracking().FirstOrDefaultAsync(a => a.AdminId == request.PerformerId);
             if (callerExist == null)
                 return new GenericResponse { Status = false, Message = "Invalid Caller Id" };
@@ -55,17 +59,29 @@ namespace OK_OnBoarding.Services
             var updated = 0;
             try
             {
+                await _dataContext.ErrorLogs.AddAsync(new Error { DateOfLog = DateTime.Now, Message = $"About to update the admin." });
+                await _dataContext.SaveChangesAsync();
+
                 updated = await _dataContext.SaveChangesAsync();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                await _dataContext.ErrorLogs.AddAsync(new Error { DateOfLog = DateTime.Now, Message =  ex.Message });
+                await _dataContext.SaveChangesAsync();
+
                 return new GenericResponse { Status = false, Message = "Error Occurred." };
             }
             if (updated <= 0)
                 return new GenericResponse { Status = false, Message = "Failed to activate Deliveryman" };
 
+            await _dataContext.ErrorLogs.AddAsync(new Error { DateOfLog = DateTime.Now, Message = $"About to update AdminActivity Log" });
+            await _dataContext.SaveChangesAsync();
+
             // Insert into AdminActivity Log {Hangfire}
             await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { Action = request.Activate == false ? AdminActionsEnum.ADMIN_DEACTIVATE_ADMIN.ToString() : AdminActionsEnum.ADMIN_ACTIVATE_ADMIN.ToString(), AdminId = request.AdminId, ReasonOfAction = request.Reason, PerformerId = request.PerformerId, DateOfAction = DateTime.Now });
+            await _dataContext.SaveChangesAsync();
+
+            await _dataContext.ErrorLogs.AddAsync(new Error { DateOfLog = DateTime.Now, Message = $"Just updated AdminActivity Log" });
             await _dataContext.SaveChangesAsync();
 
             return new GenericResponse { Status = true, Message = "Success" };
