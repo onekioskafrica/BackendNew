@@ -30,6 +30,7 @@ namespace OK_OnBoarding.Entities
         public StoresBankAccount StoresBankAccount { get; set; }
         public StoresBusinessInformation StoresBusinessInformation { get; set; }
         public ICollection<Product> Products { get; set; } //All the Products in this store
+        public ICollection<StoreReview> StoreReviews { get; set; } // All the StoreReviews of this store
         
     }
 }

@@ -32,6 +32,14 @@ namespace OK_OnBoarding.Contracts
             public const string CreateProductCategory = Base + "/admins/createproductcategory";
             public const string GetAllProducts = Base + "/admins/getallproducts";
             public const string ActivateProduct = Base + "/admins/activateproduct";
+            public const string GetAllProductReviews = Base + "/admins/getallproductreviews";
+            public const string GetUnpublishedProductReview = Base + "/admins/getunpublishedproductreviews";
+            public const string GetProductReviewById = Base + "/admins/getproductreviewbyid";
+            public const string PublishProductReview = Base + "/admins/publishproductreview";
+            public const string GetAllStoreReviews = Base + "/admins/getallstorereviews";
+            public const string GetUnpublishedStoreReviews = Base + "/admins/getunpublishedstorereviews";
+            public const string GetStoreReviewById = Base + "/admins/getstorereviewebyid";
+            public const string PublishStoreReview = Base + "/admins/publishstorereview";
         }
 
         public static class Products
@@ -43,6 +51,8 @@ namespace OK_OnBoarding.Contracts
             public const string GetProductsByCategory = Base + "/products/getproductsbycategory";
             public const string GetProductsByStore = Base + "/products/getproductsbystore";
             public const string GetProductById = Base + "/products/getproductbyid";
+            public const string ReviewProduct = Base + "/products/reviewproduct";
+            public const string GetProductReviews = Base + "/products/getproductreviews";
         }
 
         public static class Customer
@@ -112,6 +122,8 @@ namespace OK_OnBoarding.Contracts
             public const string GetStoreByStoreId = Base + "/store/getstorebystoreid";
             public const string GetAllStoresByStoreOwnerId = Base + "/store/getstoresbystoreownerid";
             public const string GetAllStores = Base + "/store/getallstores";
+            public const string ReviewStore = Base + "/store/reviewstore";
+            public const string GetStoreReviews = Base + "/store/getstorereviews";
         }
     }
 }

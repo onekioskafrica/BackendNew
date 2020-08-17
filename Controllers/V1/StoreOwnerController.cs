@@ -148,6 +148,7 @@ namespace OK_OnBoarding.Controllers.V1
             return Ok(genericResponse);
         }
 
+        [AllowAnonymous]
         [HttpPost(ApiRoute.StoreOwner.ResendOTP)]
         public async Task<IActionResult> ResendOTP([FromBody] ResendOTPRequest request)
         {

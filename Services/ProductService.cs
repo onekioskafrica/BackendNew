@@ -114,12 +114,29 @@ namespace OK_OnBoarding.Services
             if (string.IsNullOrWhiteSpace(productId.ToString()))
                 return new GenericResponse { Status = false, Message = "Product ID cannot be empty." };
 
-            var product = await _dataContext.Products.Include(p => p.ProductCategories).Include(p => p.ProductImages).Include(p => p.ProductReviews).Include(p => p.ProductPricing).Include(p => p.Store).FirstOrDefaultAsync(p => p.Id == productId);
+            var product = await _dataContext.Products.Include(p => p.ProductCategories).Include(p => p.ProductImages).Include(p => p.ProductPricing).Include(p => p.Store).FirstOrDefaultAsync(p => p.Id == productId);
 
             if (product == null)
                 return new GenericResponse { Status = false, Message = "Invalid Product Id" };
 
+            product.ProductReviews = null;
+
             return new GenericResponse { Status = true, Message = "Success", Data = product };
+        }
+
+        public async Task<List<ProductReview>> GetProductReviewAsync(Guid ProductId, PaginationFilter paginationFilter = null)
+        {
+            List<ProductReview> allProductReviews = null;
+            if(paginationFilter == null)
+            {
+                allProductReviews = await _dataContext.ProductReviews.Where(p => p.ProductId == ProductId && p.IsPublished).ToListAsync<ProductReview>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allProductReviews = await _dataContext.ProductReviews.Where(p => p.ProductId == ProductId && p.IsPublished).Skip(skip).Take(paginationFilter.PageSize).ToListAsync<ProductReview>();
+            }
+            return allProductReviews;
         }
 
         public  async Task<List<Product>> GetProductsByCategoryAsync(int categoryId, PaginationFilter paginationFilter = null)
@@ -153,6 +170,54 @@ namespace OK_OnBoarding.Services
                 allProductsByStore = await _dataContext.Products.Include(p => p.ProductCategories).Include(p => p.ProductImages).Include(p => p.ProductPricing).Where(p => p.StoreId == storeId && p.IsActive && p.IsVisible).Skip(skip).Take(paginationFilter.PageSize).ToListAsync<Product>();
             }
             return allProductsByStore;
+        }
+
+        public async Task<GenericResponse> ReviewProductAsync(ReviewProductRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.CustomerId.ToString()) || string.IsNullOrWhiteSpace(request.ProductId.ToString()) || string.IsNullOrWhiteSpace(request.Content))
+                return new GenericResponse { Status = false, Message = "CustomerId, ProductId and Content cannot be empty." };
+
+            if (request.Rating > 5 || request.Rating < 0)
+                return new GenericResponse { Status = false, Message = "Rating must be within 0-5" };
+
+            var customerExist = await _dataContext.Customers.FirstOrDefaultAsync(c => c.CustomerId == request.CustomerId);
+            if (customerExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Customer." };
+            if (!customerExist.IsVerified)
+                return new GenericResponse { Status = false, Message = "Please verify with OTP sent to your phone." };
+
+            var productExist = await _dataContext.Products.FirstOrDefaultAsync(p => p.Id == request.ProductId);
+            if (productExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Product." };
+            if(!productExist.IsVisible)
+                return new GenericResponse { Status = false, Message = "Cannot review an invisible product." };
+            if (!productExist.IsActive)
+                return new GenericResponse { Status = false, Message = "Cannot review an inactive product." };
+
+            var productReview =  _mapper.Map<ProductReview>(request);
+            productReview.IsPublished = false;
+            productReview.CreatedAt = DateTime.Now;
+
+            await _dataContext.ProductReviews.AddAsync(productReview);
+            var created = 0;
+            try
+            {
+                created = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Could not review product." };
+            }
+            if (created <= 0)
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+
+            productReview.Customer.PasswordHash = null;
+            productReview.Customer.PasswordSalt = null;
+            productReview.Customer.Carts = null;
+            productReview.Customer.Orders = null;
+
+            return new GenericResponse { Status = true, Message = "Reviewed Successfully.", Data = productReview};
+
         }
 
         public async Task<GenericResponse> UploadProductPhotosAsync(UploadProductPhotosRequest request)

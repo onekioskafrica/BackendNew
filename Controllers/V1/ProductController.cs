@@ -67,6 +67,41 @@ namespace OK_OnBoarding.Controllers
             return Ok(genericResponse);
         }
 
+        [HttpPost(ApiRoute.Products.ReviewProduct)]
+        public async Task<IActionResult> ReviewProduct([FromBody] ReviewProductRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+
+            var genericResponse = await _productService.ReviewProductAsync(request);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [HttpGet(ApiRoute.Products.GetProductReviews)]
+        public async Task<IActionResult> GetProductReviews([FromQuery] [Required] Guid productId, PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+            var allProductReviews = await _productService.GetProductReviewAsync(productId, pagination);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<ProductReview>(allProductReviews));
+
+            var paginationResponse = new PagedResponse<ProductReview>
+            {
+                Data = allProductReviews,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
+            };
+            return Ok(paginationResponse);
+        }
+
         [Authorize(Roles = Roles.StoreOwner)]
         [HttpPut(ApiRoute.Products.UploadProductPhotos)]
         public async Task<IActionResult> UploadProductPhotos([FromForm] UploadProductPhotosRequest request)

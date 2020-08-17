@@ -18,6 +18,7 @@ namespace OK_OnBoarding.Services
         Task<List<Product>> GetProductsByCategoryAsync(int categoryId, PaginationFilter pagination = null);
         Task<List<Product>> GetProductsByStoreAsync(Guid storeId, PaginationFilter pagination = null);
         Task<GenericResponse> GetProductByIdAsync(Guid productId);
-
+        Task<GenericResponse> ReviewProductAsync(ReviewProductRequest request);
+        Task<List<ProductReview>> GetProductReviewAsync(Guid ProductId, PaginationFilter pagination = null);
     }
 }
