@@ -31,5 +31,13 @@ namespace OK_OnBoarding.Services
         Task<GenericResponse> CreateProductCategoryAsync(Category category, Guid adminId);
         Task<List<Product>> GetAllProductsAsync(PaginationFilter paginationFilter = null);
         Task<GenericResponse> ActivateProductAsync(ActivateProductRequest request);
+        Task<List<ProductReview>> GetAllProductReviewsAsync(Guid ProductId, PaginationFilter paginationFilter = null);
+        Task<List<ProductReview>> GetUnpublishedProductReviewsAsync(PaginationFilter paginationFilter = null);
+        Task<GenericResponse> GetProductReviewByIdAsync(Guid ProductReviewId);
+        Task<GenericResponse> PublishProductReviewAsync(PublishProductReview request);
+        Task<List<StoreReview>> GetAllStoreReviewsAsync(Guid StoreId, PaginationFilter paginationFilter = null);
+        Task<List<StoreReview>> GetUnpublishedStoreReviewsAsync(PaginationFilter paginationFilter = null);
+        Task<GenericResponse> GetStoreReviewByIdAsync(Guid StoreReviewId);
+        Task<GenericResponse> PublishStoreReviewAsync(PublishStoreReview request);
     }
 }

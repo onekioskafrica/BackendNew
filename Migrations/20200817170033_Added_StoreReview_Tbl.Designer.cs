@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OK_OnBoarding.Data;
 
 namespace OK_OnBoarding.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20200817170033_Added_StoreReview_Tbl")]
+    partial class Added_StoreReview_Tbl
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -300,9 +302,6 @@ namespace OK_OnBoarding.Migrations
                     b.Property<Guid?>("StoreId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("StoreReviewId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
 
                     b.HasIndex("AdminId");
@@ -318,8 +317,6 @@ namespace OK_OnBoarding.Migrations
                     b.HasIndex("ProductReviewId");
 
                     b.HasIndex("StoreId");
-
-                    b.HasIndex("StoreReviewId");
 
                     b.ToTable("AdminActivityLogs");
                 });
@@ -1907,10 +1904,6 @@ namespace OK_OnBoarding.Migrations
                     b.HasOne("OK_OnBoarding.Entities.Store", "Store")
                         .WithMany()
                         .HasForeignKey("StoreId");
-
-                    b.HasOne("OK_OnBoarding.Entities.StoreReview", "StoreReview")
-                        .WithMany()
-                        .HasForeignKey("StoreReviewId");
                 });
 
             modelBuilder.Entity("OK_OnBoarding.Entities.AdminSelfEditHistory", b =>

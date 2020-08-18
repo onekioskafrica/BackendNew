@@ -107,6 +107,7 @@ namespace OK_OnBoarding.Controllers.V1
 
         }
 
+        [AllowAnonymous]
         [HttpPost(ApiRoute.Deliveryman.ResendOTP)]
         public async Task<IActionResult> ResendOTP([FromBody] ResendOTPRequest request)
         {

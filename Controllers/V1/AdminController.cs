@@ -220,6 +220,108 @@ namespace OK_OnBoarding.Controllers.V1
         }
 
         [Authorize(Roles = Roles.Admin)]
+        [HttpGet(ApiRoute.Admin.GetAllProductReviews)]
+        public async Task<IActionResult> GetAllProductReviews([FromQuery] [Required] Guid productId, [FromQuery] PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+
+            var allProductReviews = await _adminService.GetAllProductReviewsAsync(productId, pagination);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<ProductReview>(allProductReviews));
+
+            var paginationResponse = new PagedResponse<ProductReview>
+            {
+                Data = allProductReviews,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
+            };
+            return Ok(paginationResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpGet(ApiRoute.Admin.GetAllStoreReviews)]
+        public async Task<IActionResult> GetAllStoreReviews([FromQuery] [Required] Guid storeId, [FromQuery] PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+
+            var allStoreReviews = await _adminService.GetAllStoreReviewsAsync(storeId, pagination);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<StoreReview>(allStoreReviews));
+
+            var paginationResponse = new PagedResponse<StoreReview>
+            {
+                Data = allStoreReviews,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
+            };
+            return Ok(paginationResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpGet(ApiRoute.Admin.GetUnpublishedStoreReviews)]
+        public async Task<IActionResult> GetUnpublishedStoreReviews([FromQuery] PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+
+            var allStoreReviews = await _adminService.GetUnpublishedStoreReviewsAsync(pagination);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<StoreReview>(allStoreReviews));
+
+            var paginationResponse = new PagedResponse<StoreReview>
+            {
+                Data = allStoreReviews,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
+            };
+            return Ok(paginationResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpGet(ApiRoute.Admin.GetUnpublishedProductReview)]
+        public async Task<IActionResult> GetUnpublishedProductReview([FromQuery] PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+
+            var allProductReviews = await _adminService.GetUnpublishedProductReviewsAsync(pagination);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<ProductReview>(allProductReviews));
+
+            var paginationResponse = new PagedResponse<ProductReview>
+            {
+                Data = allProductReviews,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
+            };
+            return Ok(paginationResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpGet(ApiRoute.Admin.GetStoreReviewById)]
+        public async Task<IActionResult> GetStoreReviewById([FromQuery] [Required] Guid storeReviewId)
+        {
+            var genericResponse = await _adminService.GetStoreReviewByIdAsync(storeReviewId);
+
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpGet(ApiRoute.Admin.GetProductReviewById)]
+        public async Task<IActionResult> GetProductReviewById([FromQuery] [Required] Guid productReviewId)
+        {
+            var genericResponse = await _adminService.GetProductReviewByIdAsync(productReviewId);
+
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
         [HttpGet(ApiRoute.Admin.GetDeliverymanDetailsById)]
         public async Task<IActionResult> GetDeliverymanDetailsById([FromQuery] Guid deliverymanId)
         {
@@ -283,6 +385,29 @@ namespace OK_OnBoarding.Controllers.V1
             return Ok(genericResponse);
         }
 
+        [Authorize(Roles = Roles.Admin)]
+        [HttpPut(ApiRoute.Admin.PublishStoreReview)]
+        public async Task<IActionResult> PublishStoreReview([FromBody] PublishStoreReview request)
+        {
+            var genericResponse = await _adminService.PublishStoreReviewAsync(request);
+
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+
+            return Ok(genericResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpPut(ApiRoute.Admin.PublishProductReview)]
+        public async Task<IActionResult> PublishProductReview([FromBody] PublishProductReview request)
+        {
+            var genericResponse = await _adminService.PublishProductReviewAsync(request);
+
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+
+            return Ok(genericResponse);
+        }
 
         [Authorize(Roles = Roles.Admin)]
         [HttpPost(ApiRoute.Admin.CreateAdmin)]

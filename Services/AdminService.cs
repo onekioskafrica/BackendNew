@@ -137,6 +137,69 @@ namespace OK_OnBoarding.Services
 
             return new GenericResponse { Status = true, Message = "Success" };
         }
+        public async Task<GenericResponse> PublishStoreReviewAsync(PublishStoreReview request)
+        {
+            var storeReviewExist = await _dataContext.StoreReviews.FirstOrDefaultAsync(s => s.Id == request.StoreReviewId);
+            if (storeReviewExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Store Review" };
+
+            var checkAdminResponse = await CheckAdmin(request.AdminId);
+            if (!checkAdminResponse.Status)
+                return checkAdminResponse;
+
+            storeReviewExist.IsPublished = request.ToPublish;
+            storeReviewExist.PublishedAt = DateTime.Now;
+            _dataContext.Entry(storeReviewExist).State = EntityState.Modified;
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (updated <= 0)
+                return new GenericResponse { Status = false, Message = request.ToPublish ? "Failed to publish Store review" : "Failed to unpublish Store review" };
+
+            // Insert into AdminActivity Log {Hangfire}
+            await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { Action = request.ToPublish == false ? AdminActionsEnum.ADMIN_UNPUBLISHED_STORE_REVIEW.ToString() : AdminActionsEnum.ADMIN_PUBLISHED_STORE_REVIEW.ToString(), StoreReviewId = request.StoreReviewId, ReasonOfAction = request.Reason, PerformerId = request.AdminId, DateOfAction = DateTime.Now });
+            await _dataContext.SaveChangesAsync();
+
+            return new GenericResponse { Status = true, Message = "Success" };
+        }
+
+        public async Task<GenericResponse> PublishProductReviewAsync(PublishProductReview request)
+        {
+            var productReviewExist = await _dataContext.ProductReviews.FirstOrDefaultAsync(p => p.Id == request.ProductReviewId);
+            if (productReviewExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Product Review" };
+
+            var checkAdminResponse = await CheckAdmin(request.AdminId);
+            if (!checkAdminResponse.Status)
+                return checkAdminResponse;
+
+            productReviewExist.IsPublished = request.ToPublish;
+            productReviewExist.PublishedAt = DateTime.Now;
+            _dataContext.Entry(productReviewExist).State = EntityState.Modified;
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (updated <= 0)
+                return new GenericResponse { Status = false, Message = request.ToPublish ? "Failed to publish Product review" : "Failed to unpublish Product review" };
+
+            // Insert into AdminActivity Log {Hangfire}
+            await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { Action = request.ToPublish == false ? AdminActionsEnum.ADMIN_UNPUBLISH_PRODUCT_REVIEW.ToString() : AdminActionsEnum.ADMIN_PUBLISHED_PRODUCT_REVIEW.ToString(), ProductReviewId = request.ProductReviewId, ReasonOfAction = request.Reason, PerformerId = request.AdminId, DateOfAction = DateTime.Now });
+            await _dataContext.SaveChangesAsync();
+
+            return new GenericResponse { Status = true, Message = "Success" };
+        }
 
         public async Task<GenericResponse> ActivateStore(ActivateStoreRequest request)
         {
@@ -438,6 +501,68 @@ namespace OK_OnBoarding.Services
             return allDeliverymenResponse;
         }
 
+        public async Task<List<ProductReview>> GetAllProductReviewsAsync(Guid ProductId, PaginationFilter paginationFilter = null)
+        {
+            List<ProductReview> allProductReviews = null;
+
+            if (paginationFilter == null)
+            {
+                allProductReviews = await _dataContext.ProductReviews.ToListAsync<ProductReview>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allProductReviews = await _dataContext.ProductReviews.Skip(skip).Take(paginationFilter.PageSize).ToListAsync();
+            }
+            return allProductReviews;
+        }
+
+        public async Task<List<StoreReview>> GetAllStoreReviewsAsync(Guid StoreId, PaginationFilter paginationFilter = null)
+        {
+            List<StoreReview> allStoreReviews = null;
+
+            if (paginationFilter == null)
+            {
+                allStoreReviews = await _dataContext.StoreReviews.ToListAsync<StoreReview>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allStoreReviews = await _dataContext.StoreReviews.Skip(skip).Take(paginationFilter.PageSize).ToListAsync();
+            }
+            return allStoreReviews;
+        }
+
+        public async Task<List<StoreReview>> GetUnpublishedStoreReviewsAsync(PaginationFilter paginationFilter = null)
+        {
+            List<StoreReview> unpublishedStoreReviews = null;
+            if(paginationFilter == null)
+            {
+                unpublishedStoreReviews = await _dataContext.StoreReviews.Where(s => s.IsPublished == false).ToListAsync<StoreReview>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                unpublishedStoreReviews = await _dataContext.StoreReviews.Skip(skip).Take(paginationFilter.PageSize).Where(s => s.IsPublished == false).ToListAsync();
+            }
+            return unpublishedStoreReviews;
+        }
+
+        public async Task<List<ProductReview>> GetUnpublishedProductReviewsAsync(PaginationFilter paginationFilter = null)
+        {
+            List<ProductReview> unpublishedProductReviews = null;
+            if (paginationFilter == null)
+            {
+                unpublishedProductReviews = await _dataContext.ProductReviews.Where(p => p.IsPublished == false).ToListAsync<ProductReview>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                unpublishedProductReviews = await _dataContext.ProductReviews.Skip(skip).Take(paginationFilter.PageSize).Where(p => p.IsPublished == false).ToListAsync();
+            }
+            return unpublishedProductReviews;
+        }
+
         public async Task<List<Product>> GetAllProductsAsync(PaginationFilter paginationFilter = null)
         {
             List<Product> allProducts = null;
@@ -500,6 +625,28 @@ namespace OK_OnBoarding.Services
                 allUnactivatedStores = await _dataContext.Stores.Skip(skip).Take(paginationFilter.PageSize).Where(s => s.IsActivated == false).ToListAsync<Store>();
             }
             return allUnactivatedStores;
+        }
+
+        public async Task<GenericResponse> GetStoreReviewByIdAsync(Guid StoreReviewId)
+        {
+            var storeReviewExist = await _dataContext.StoreReviews.FirstOrDefaultAsync(s => s.Id == StoreReviewId);
+
+            if (storeReviewExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid StoreReview Id" };
+
+
+            return new GenericResponse { Status = true, Data = storeReviewExist };
+        }
+
+        public async Task<GenericResponse> GetProductReviewByIdAsync(Guid productReviewId)
+        {
+            var productReviewExist = await _dataContext.ProductReviews.FirstOrDefaultAsync(p => p.Id == productReviewId);
+
+            if (productReviewExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid ProductReview Id" };
+
+
+            return new GenericResponse { Status = true, Data = productReviewExist };
         }
 
         public async Task<GenericResponse> GetDeliverymanDetailsByIdAsync(Guid deliverymanId)

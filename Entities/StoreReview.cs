@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 
 namespace OK_OnBoarding.Entities
 {
-    public class ProductReview
+    public class StoreReview
     {
         [Key]
         public Guid Id { get; set; }
 
-        [ForeignKey("Product")]
-        public Guid ProductId { get; set; }
+        [ForeignKey("Store")]
+        public Guid StoreId { get; set; }
 
         [ForeignKey("Customer")]
         public Guid CustomerId { get; set; }
@@ -26,7 +26,7 @@ namespace OK_OnBoarding.Entities
         public string Content { get; set; }
 
 
-        public Product Product { get; set; } // The Product that has this Review
+        public Store Store { get; set; } //The Store that owns this review
         public Customer Customer { get; set; } // Reviewer
     }
 }

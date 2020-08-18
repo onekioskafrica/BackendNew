@@ -10,6 +10,7 @@ using OK_OnBoarding.Entities;
 using OK_OnBoarding.Services;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -91,6 +92,41 @@ namespace OK_OnBoarding.Controllers.V1
             if (!genericResponse.Status)
                 return BadRequest(genericResponse);
             return Ok(genericResponse);
+        }
+
+        [HttpPost(ApiRoute.Store.ReviewStore)]
+        public async Task<IActionResult> ReviewStore([FromBody] ReviewStoreRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+
+            var genericResponse = await _storeService.ReviewStoreAsync(request);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [HttpGet(ApiRoute.Store.GetStoreReviews)]
+        public async Task<IActionResult> GetStoreReviews([FromQuery] [Required] Guid storeId, PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+            var allStoreReviews = await _storeService.GetStoreReviewsAsync(storeId, pagination);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<StoreReview>(allStoreReviews));
+
+            var paginationResponse = new PagedResponse<StoreReview>
+            {
+                Data = allStoreReviews,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
+            };
+            return Ok(paginationResponse);
         }
 
         [HttpGet(ApiRoute.Store.GetStoreByStoreId)]

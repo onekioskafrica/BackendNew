@@ -2,6 +2,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using OK_OnBoarding.Contracts.V1.Requests;
 using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Data;
 using OK_OnBoarding.Domains;
@@ -181,6 +182,51 @@ namespace OK_OnBoarding.Services
             return response;
         }
 
+        public async Task<GenericResponse> ReviewStoreAsync(ReviewStoreRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.CustomerId.ToString()) || string.IsNullOrWhiteSpace(request.StoreId.ToString()) || string.IsNullOrWhiteSpace(request.Content))
+                return new GenericResponse { Status = false, Message = "CustomerId, StoreId and Content cannot be empty." };
+
+            if (request.Rating > 5 || request.Rating < 0)
+                return new GenericResponse { Status = false, Message = "Rating must be within 0-5" };
+
+            var customerExist = await _dataContext.Customers.FirstOrDefaultAsync(c => c.CustomerId == request.CustomerId);
+            if (customerExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Customer." };
+            if (!customerExist.IsVerified)
+                return new GenericResponse { Status = false, Message = "Please verify with OTP sent to your phone." };
+
+            var storeExist = await _dataContext.Stores.FirstOrDefaultAsync(s => s.Id == request.StoreId);
+            if (storeExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Store" };
+            if (storeExist.IsClosed || !storeExist.IsActivated)
+                return new GenericResponse { Status = false, Message = "Store is closed/inactive" };
+
+            var storeReview = _mapper.Map<StoreReview>(request);
+            storeReview.IsPublished = false;
+            storeReview.CreatedAt = DateTime.Now;
+
+            await _dataContext.StoreReviews.AddAsync(storeReview);
+            var created = 0;
+            try
+            {
+                created = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Could not review store." };
+            }
+            if (created <= 0)
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+
+            storeReview.Customer.PasswordHash = null;
+            storeReview.Customer.PasswordSalt = null;
+            storeReview.Customer.Carts = null;
+            storeReview.Customer.Orders = null;
+
+            return new GenericResponse { Status = true, Message = "Reviewed Successfully.", Data = storeReview };
+        }
+
         public async Task<GenericResponse> GetStoreByIdAsync(Guid storeId)
         {
             var store = await _dataContext.Stores.Include(s => s.StoresBankAccount).Include(s => s.StoresBusinessInformation).Include(s => s.StoreOwner).FirstOrDefaultAsync(s => s.Id == storeId);
@@ -233,11 +279,27 @@ namespace OK_OnBoarding.Services
             return allStores;
         }
 
+        public async Task<List<StoreReview>> GetStoreReviewsAsync(Guid storeId, PaginationFilter paginationFilter = null)
+        {
+            List<StoreReview> allStoreReviews = null;
+            if (paginationFilter == null)
+            {
+                allStoreReviews = await _dataContext.StoreReviews.Where(s => s.StoreId == storeId && s.IsPublished).ToListAsync<StoreReview>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allStoreReviews = await _dataContext.StoreReviews.Where(s => s.StoreId == storeId && s.IsPublished).Skip(skip).Take(paginationFilter.PageSize).ToListAsync<StoreReview>();
+            }
+            return allStoreReviews;
+        }
+
         public string GenerateStoreId(int length)
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             return new string(Enumerable.Repeat(chars, length)
               .Select(s => s[random.Next(s.Length)]).ToArray());
         }
+
     }
 }
