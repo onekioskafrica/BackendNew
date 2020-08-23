@@ -30,6 +30,7 @@ namespace OK_OnBoarding.Installers
             services.AddScoped<IAwsS3UploadService, AwsS3UploadService>();
             services.AddScoped<IStoreService, StoreService>();
             services.AddScoped<IProductService, ProductService>();
+            services.AddScoped<ICartService, CartService>();
         }
     }
 }

@@ -466,5 +466,91 @@ namespace OK_OnBoarding.Controllers.V1
                 return BadRequest(genericResponse);
             return Ok(genericResponse);
         }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpPost(ApiRoute.Admin.ConfigureDiscount)]
+        public async Task<IActionResult> ConfigureDiscount([FromBody] AdminConfigureDiscountRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+
+            var genericResponse = await _adminService.ConfigureDiscountAsync(request);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpPost(ApiRoute.Admin.ActivateConfiguredDiscount)]
+        public async Task<IActionResult> ActivateConfiguredDiscount([FromBody] ActivateDiscountRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+
+            var genericResponse = await _adminService.ActivateDiscountAsync(request);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpGet(ApiRoute.Admin.GetAllAdminConfiguredDiscounts)]
+        public async Task<IActionResult> GetAllAdminConfiguredDiscounts([FromQuery] PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+            var allAdminConfiguredDiscounts = await _adminService.GetAllAdminConfiguredDiscountsAsync(pagination);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<Coupon>(allAdminConfiguredDiscounts));
+
+            var paginationResponse = new PagedResponse<Coupon>
+            {
+                Data = allAdminConfiguredDiscounts,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
+            };
+            return Ok(paginationResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpGet(ApiRoute.Admin.GetAllStoreownerConfiguredDiscounts)]
+        public async Task<IActionResult> GetAllStoreownerConfiguredDiscounts([FromQuery] PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+            var allStoreownerConfiguredDiscounts = await _adminService.GetAllStoreOwnerConfiguredDiscountsAsync(pagination);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<Coupon>(allStoreownerConfiguredDiscounts));
+
+            var paginationResponse = new PagedResponse<Coupon>
+            {
+                Data = allStoreownerConfiguredDiscounts,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
+            };
+            return Ok(paginationResponse);
+        }
+
+        [Authorize(Roles = Roles.Admin)]
+        [HttpGet(ApiRoute.Admin.GetDiscountById)]
+        public async Task<IActionResult> GetDiscountById([FromQuery] Guid Id)
+        {
+            var genericResponse = await _adminService.GetDiscountByIdAsync(Id);
+
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
     }
 }

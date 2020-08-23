@@ -31,6 +31,9 @@ namespace OK_OnBoarding.Entities
         [ForeignKey("StoreReview")]
         public Guid? StoreReviewId { get; set; }
 
+        [ForeignKey("Coupon")]
+        public Guid? DiscountId { get; set; }
+
         public string Action { get; set; }
         public DateTime? DateOfAction { get; set; }
         public string ReasonOfAction { get; set; }
@@ -45,5 +48,7 @@ namespace OK_OnBoarding.Entities
         public Product Product { get; set; }
         public ProductReview ProductReview { get; set; }
         public StoreReview StoreReview { get; set; }
+
+        public Coupon Coupon { get; set; }
     }
 }

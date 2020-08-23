@@ -42,6 +42,7 @@ namespace OK_OnBoarding.Helpers
             CreateMap<Admin, AdminResponse>();
             CreateMap<ReviewProductRequest, ProductReview>();
             CreateMap<ReviewStoreRequest, StoreReview>();
+            CreateMap<Order, CheckoutResponse>();
         }
     }
 }

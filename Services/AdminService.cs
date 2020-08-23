@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using Amazon.Runtime.Internal.Util;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OK_OnBoarding.Contracts.V1.Requests;
@@ -201,15 +202,51 @@ namespace OK_OnBoarding.Services
             return new GenericResponse { Status = true, Message = "Success" };
         }
 
+        public async Task<GenericResponse> ActivateDiscountAsync(ActivateDiscountRequest request)
+        {
+            var checkAdminResponse = await CheckAdmin(request.AdminId);
+            if (!checkAdminResponse.Status)
+                return checkAdminResponse;
+
+            var configuredDiscountExist = await _dataContext.Coupons.FirstOrDefaultAsync(c => c.Id == request.DiscountId);
+            if (configuredDiscountExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Discount Id" };
+
+            if(configuredDiscountExist.IsActive == request.Activate)
+            {
+                return new GenericResponse { Status = false, Message = configuredDiscountExist.IsActive ? "Discount is already active" : "Discount is already inactive" };
+            }
+
+            configuredDiscountExist.IsActive = request.Activate;
+            _dataContext.Entry(configuredDiscountExist).State = EntityState.Modified;
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (updated <= 0)
+                return new GenericResponse { Status = false, Message = request.Activate ? "Failed to activate Discount" : "Failed to deactivate Discount" };
+
+            // Insert into AdminActivity Log {Hangfire}
+            await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { Action = request.Activate == false ? AdminActionsEnum.ADMIN_DEACTIVATE_DISCOUNT.ToString() : AdminActionsEnum.ADMIN_ACTIVATE_DISCOUNT.ToString(), DiscountId = request.DiscountId, ReasonOfAction = request.Reason, PerformerId = request.AdminId, DateOfAction = DateTime.Now });
+            await _dataContext.SaveChangesAsync();
+
+            return new GenericResponse { Status = true, Message = "Success" };
+        }
+
         public async Task<GenericResponse> ActivateStore(ActivateStoreRequest request)
         {
             var storeExist = await _dataContext.Stores.FirstOrDefaultAsync(s => s.Id == request.StoreId);
             if (storeExist == null)
                 return new GenericResponse { Status = false, Message = "Invalid Store" };
 
-            var adminExist = await _dataContext.Admins.FirstOrDefaultAsync(a => a.AdminId == request.AdminId);
-            if (adminExist == null)
-                return new GenericResponse { Status = false, Message = "Invalid Admin" };
+            var checkAdminResponse = await CheckAdmin(request.AdminId);
+            if (!checkAdminResponse.Status)
+                return checkAdminResponse;
 
             storeExist.IsActivated = request.Activate;
             _dataContext.Entry(storeExist).State = EntityState.Modified;
@@ -223,7 +260,7 @@ namespace OK_OnBoarding.Services
                 return new GenericResponse { Status = false, Message = "Error Occurred." };
             }
             if (updated <= 0)
-                return new GenericResponse { Status = false, Message = request.Activate ? "Failed to activate Store" : "Failed to deactivate Product" };
+                return new GenericResponse { Status = false, Message = request.Activate ? "Failed to activate Store" : "Failed to deactivate Store" };
 
             // Insert into AdminActivity Log {Hangfire}
             await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { Action = request.Activate == false ? AdminActionsEnum.ADMIN_DEACTIVATE_STORE.ToString() : AdminActionsEnum.ADMIN_ACTIVATE_STORE.ToString(), StoreId = request.StoreId, ReasonOfAction = request.Reason, PerformerId = request.AdminId, DateOfAction = DateTime.Now });
@@ -369,6 +406,71 @@ namespace OK_OnBoarding.Services
             response.Data = userData;
             return response;
         }
+
+        public async Task<GenericResponse> ConfigureDiscountAsync(AdminConfigureDiscountRequest request)
+        {
+            var checkAdminResponse = await CheckAdmin(request.AdminId);
+            if (!checkAdminResponse.Status)
+                return checkAdminResponse;
+
+            var utility = new OnekioskUtility();
+
+            var validationResponse = utility.ValidateDiscountInputs(request.IsPercentageDiscount, request.IsAmountDiscount, request.IsSetPrice, request.PercentageDiscount);
+            if (!validationResponse.Status)
+                return validationResponse;
+
+            var discountConfiguration = new Coupon { 
+                IsStoreOwnerConfigured = false,
+                StoreId = null,
+                IsForAllStoresOwnByAStoreOwner = false,
+                StoreOwnerId = null,
+                Code = null,
+                Title = request.Title,
+                IsActive = request.IsActive,
+                AdminId = request.AdminId,
+                IsAdminConfigured = true,
+                IsForCategory = request.IsForCategory,
+                CategoryId = request.CategoryId,
+                IsForProduct = request.IsForProduct,
+                ProductId = request.ProductId,
+                IsForAllProducts = request.IsForAllProduct,
+                IsForShipping = request.IsForShipping,
+                IsForPrice = request.IsForPrice,
+                IsSlotSet = request.IsSlotSet,
+                AllocatedSlot = request.AllocatedSlot,
+                StartDate = request.StartDate,
+                EndDate = request.EndDate,
+                IsPercentageDiscount = request.IsPercentageDiscount,
+                PercentageDiscount = request.PercentageDiscount,
+                IsAmountDiscount = request.IsAmountDiscount,
+                AmountDiscount = request.AmountDiscount,
+                IsSetPrice = request.IsSetPrice,
+                SetPrice = request.SetPrice
+            };
+
+            await _dataContext.Coupons.AddAsync(discountConfiguration);
+            var created = 0;
+            try
+            {
+                created = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (created <= 0)
+                return new GenericResponse { Status = false, Message = "Couldn't create Discount Coupon." };
+
+            // Insert into AdminActivity Log {Hangfire}
+            await _dataContext.AdminActivityLogs.AddAsync(new AdminActivityLog { Action = AdminActionsEnum.ADMIN_CONFIGURED_DISCOUNT.ToString(), DiscountId = discountConfiguration.Id, ReasonOfAction = request.ReasonForCreation, PerformerId = request.AdminId, DateOfAction = DateTime.Now });
+            await _dataContext.SaveChangesAsync();
+
+            discountConfiguration.Admin.PasswordHash = null;
+            discountConfiguration.Admin.PasswordSalt = null;
+
+            return new GenericResponse { Status = true, Message = "Success", Data = discountConfiguration };
+        }
+
 
         public async Task<GenericResponse> CreateProductCategoryAsync(Category category, Guid adminId)
         {
@@ -596,6 +698,36 @@ namespace OK_OnBoarding.Services
             return allStores;
         }
 
+        public async Task<List<Coupon>> GetAllAdminConfiguredDiscountsAsync(PaginationFilter paginationFilter = null)
+        {
+            List<Coupon> allDiscounts = null;
+            if(paginationFilter == null)
+            {
+                allDiscounts = await _dataContext.Coupons.Where(c => c.IsAdminConfigured).ToListAsync<Coupon>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allDiscounts = await _dataContext.Coupons.Where(c => c.IsAdminConfigured).Skip(skip).Take(paginationFilter.PageSize).ToListAsync();
+            }
+            return allDiscounts;
+        }
+
+        public async Task<List<Coupon>> GetAllStoreOwnerConfiguredDiscountsAsync(PaginationFilter paginationFilter = null)
+        {
+            List<Coupon> allDiscounts = null;
+            if (paginationFilter == null)
+            {
+                allDiscounts = await _dataContext.Coupons.Where(c => c.IsStoreOwnerConfigured).ToListAsync<Coupon>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allDiscounts = await _dataContext.Coupons.Where(c => c.IsStoreOwnerConfigured).Skip(skip).Take(paginationFilter.PageSize).ToListAsync();
+            }
+            return allDiscounts;
+        }
+
         public async Task<List<DeliverymanResponse>> GetAllUnActivatedDeliverymenAsync(PaginationFilter paginationFilter = null)
         {
             List<Deliveryman> allUnactivatedDeliveryMen = null;
@@ -670,6 +802,15 @@ namespace OK_OnBoarding.Services
                 return new GenericResponse { Status = false, Message = "Invalid StoreId." };
 
             return new GenericResponse { Status = true, Message = "Success", Data = storedetails };
+        }
+
+        public async Task<GenericResponse> GetDiscountByIdAsync(Guid Id)
+        {
+            var discount = await _dataContext.Coupons.FirstOrDefaultAsync(c => c.Id == Id);
+            if (discount == null)
+                return new GenericResponse { Status = false, Message = "Invalid Discount" };
+
+            return new GenericResponse { Status = true, Message = "Success", Data = discount };
         }
 
         public async Task<AuthenticationResponse> LoginAdminAsync(string email, string password)
@@ -759,5 +900,6 @@ namespace OK_OnBoarding.Services
 
             return tokenHandler.WriteToken(token);
         }
+
     }
 }

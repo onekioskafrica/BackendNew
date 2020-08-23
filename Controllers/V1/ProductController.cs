@@ -84,6 +84,24 @@ namespace OK_OnBoarding.Controllers
             return Ok(genericResponse);
         }
 
+        [Authorize(Roles = Roles.StoreOwner)]
+        [HttpPost(ApiRoute.Products.RestockProduct)]
+        public async Task<IActionResult> RestockProduct([FromBody] RestockProductRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+
+            var genericResponse = await _productService.RestockProductAsync(request);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
         [HttpGet(ApiRoute.Products.GetProductReviews)]
         public async Task<IActionResult> GetProductReviews([FromQuery] [Required] Guid productId, PaginationQuery paginationQuery)
         {

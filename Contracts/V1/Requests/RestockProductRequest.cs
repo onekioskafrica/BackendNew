@@ -5,28 +5,25 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace OK_OnBoarding.Entities
+namespace OK_OnBoarding.Contracts.V1.Requests
 {
-    public class ProductPricing
+    public class RestockProductRequest
     {
-        [Key]
-        public Guid Id { get; set; }
-
-        [ForeignKey("Product")]
+        [Required]
         public Guid ProductId { get; set; }
-        public string SellerSku { get; set; }
+        
+        [Required]
+        public Guid StoreOwnerId { get; set; }
+
+        [Required]
+        public int InStock { get; set; }
 
         [Column(TypeName = "decimal(18, 2)")]
         public decimal Price { get; set; }
-
-        public bool IsSalePriceSet { get; set; }
 
         [Column(TypeName = "decimal(18, 2)")]
         public decimal SalePrice { get; set; }
         public DateTime? SaleStartDate { get; set; }
         public DateTime? SaleEndDate { get; set; }
-
-
-        public Product Product { get; set; } // The product which this Product Pricing describes
     }
 }

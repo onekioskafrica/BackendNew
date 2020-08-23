@@ -249,13 +249,20 @@ namespace OK_OnBoarding.Services
 
             if (customer == null)
                 return new AuthenticationResponse { Errors = new[] { "Customer does not exist." } };
-            if(!customer.IsVerified)
-                return new AuthenticationResponse { Errors = new[] { "Please verify with the otp sent to your phone." } };
+            
 
             var isUpdateComplete = true;
             if (string.IsNullOrWhiteSpace(customer.Line1))
                 isUpdateComplete = false;
 
+            if (!customer.IsVerified)
+            {
+                var userResponseData = _mapper.Map<CustomerUserDataResponse>(customer);
+                userResponseData.IsUpdateComplete = isUpdateComplete;
+
+                return new AuthenticationResponse { Errors = new[] { "Please verify with the otp sent to your phone." }, Data =  userResponseData};
+            }
+                
             bool isPasswordCorrect = false;
             try
             {

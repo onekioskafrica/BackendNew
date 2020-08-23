@@ -5,6 +5,7 @@ using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Data;
 using OK_OnBoarding.Domains;
 using OK_OnBoarding.Entities;
+using OK_OnBoarding.Helpers;
 using OK_OnBoarding.Options;
 using System;
 using System.Collections.Generic;
@@ -58,6 +59,7 @@ namespace OK_OnBoarding.Services
             thisProductPricing.ProductId = product.Id;
             thisProductPricing.SellerSku = request.SellerSku;
             thisProductPricing.Price = request.Price;
+            thisProductPricing.IsSalePriceSet = request.IsSalePriceSet;
             thisProductPricing.SalePrice = request.SalePrice;
             thisProductPricing.SaleStartDate = request.SaleStartDate;
             thisProductPricing.SaleEndDate = request.SaleEndDate;
@@ -170,6 +172,73 @@ namespace OK_OnBoarding.Services
                 allProductsByStore = await _dataContext.Products.Include(p => p.ProductCategories).Include(p => p.ProductImages).Include(p => p.ProductPricing).Where(p => p.StoreId == storeId && p.IsActive && p.IsVisible).Skip(skip).Take(paginationFilter.PageSize).ToListAsync<Product>();
             }
             return allProductsByStore;
+        }
+
+        public async Task<GenericResponse> RestockProductAsync(RestockProductRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.StoreOwnerId.ToString()) || string.IsNullOrWhiteSpace(request.ProductId.ToString()))
+                return new GenericResponse { Status = false, Message = "StoreOwnerId and ProductId cannot be empty." };
+
+            if (request.InStock < 0)
+                return new GenericResponse { Status = false, Message = "Instock cannot be less than zero" };
+
+            var productExist = await _dataContext.Products.Include(p => p.Store).Include(p => p.ProductPricing).FirstOrDefaultAsync(p => p.Id == request.ProductId);
+            if (productExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Product" };
+            if (!productExist.IsActive)
+                return new GenericResponse { Status = false, Message = "Product is not active." };
+            if (productExist.Store.StoreOwnerId != request.StoreOwnerId)
+                return new GenericResponse { Status = false, Message = "Product is not for storeowner." };
+
+            //Get Old ProductPricing
+            var OldPrice = productExist.ProductPricing.Price;
+            var OldSalePrice = productExist.ProductPricing.SalePrice;
+            var OldSaleStartDate = productExist.ProductPricing.SaleStartDate;
+            var OldSaleEndDate = productExist.ProductPricing.SaleEndDate;
+
+            productExist.InStock = productExist.InStock + request.InStock;
+            productExist.ProductPricing.Price = request.Price;
+            productExist.ProductPricing.SalePrice = request.SalePrice;
+            productExist.ProductPricing.SaleStartDate = request.SaleStartDate;
+            productExist.ProductPricing.SaleEndDate = request.SaleEndDate;
+
+            _dataContext.Entry(productExist).State = EntityState.Modified;
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (updated <= 0)
+                return new GenericResponse { Status = false, Message = "Couldn't Restock" };
+
+            // Log to StoreOwnerActivityLogs {Hangfire}
+            await _dataContext.StoreOwnerActivityLogs.AddAsync(new StoreOwnerActivityLog { StoreId = productExist.Store.Id, StoreOwnerId = request.StoreOwnerId, Action =  StoreOwnerActionsEnum.RESTOCK_PRODUCT.ToString(), ProductId = request.ProductId, DateOfAction = DateTime.Now });
+
+            try
+            {
+                await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                //Do Nothing
+            }
+
+            // Log to ProductPricingHistories table {Hangfire}
+            await _dataContext.ProductPricingHistories.AddAsync(new ProductPricingHistory { StoreOwnerId = request.StoreOwnerId, ProductId = request.ProductId, OldPrice = OldPrice, OldSalePrice = OldSalePrice, OldSaleStartDate = OldSaleStartDate, OldSaleEndDate = OldSaleEndDate, DateOfAction = DateTime.Now});
+            try
+            {
+                await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                //Do Nothing
+            }
+
+            return new GenericResponse { Status = false, Message = "Restocked Product Successfully." };
         }
 
         public async Task<GenericResponse> ReviewProductAsync(ReviewProductRequest request)

@@ -56,6 +56,8 @@ namespace OK_OnBoarding.Contracts.V1.Requests
         [Required]
         public decimal Price { get; set; }
 
+        [Required]
+        public bool IsSalePriceSet { get; set; }
         public decimal SalePrice { get; set; }
         public DateTime? SaleStartDate { get; set; }
         public DateTime? SaleEndDate { get; set; }
