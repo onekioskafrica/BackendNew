@@ -25,6 +25,14 @@
     <Compile Remove="Migrations\20200808080306_Modified_StoreOwners_Tbl.Designer.cs" />
     <Compile Remove="Migrations\20200809140340_Modified_FK_Product_Store_Tbls.cs" />
     <Compile Remove="Migrations\20200809140340_Modified_FK_Product_Store_Tbls.Designer.cs" />
+    <Compile Remove="Migrations\20200821184533_Discount_Configuration_Tables.cs" />
+    <Compile Remove="Migrations\20200821184533_Discount_Configuration_Tables.Designer.cs" />
+    <Compile Remove="Migrations\20200821190158_Discount_Configuration_Tables.cs" />
+    <Compile Remove="Migrations\20200821190158_Discount_Configuration_Tables.Designer.cs" />
+    <Compile Remove="Migrations\20200821190406_Discount_Configuration_Tables.cs" />
+    <Compile Remove="Migrations\20200821190406_Discount_Configuration_Tables.Designer.cs" />
+    <Compile Remove="Migrations\20200821195739_Discount_Configuration_Tables.cs" />
+    <Compile Remove="Migrations\20200821195739_Discount_Configuration_Tables.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>

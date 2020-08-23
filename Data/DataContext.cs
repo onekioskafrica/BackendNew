@@ -32,28 +32,34 @@ namespace OK_OnBoarding.Data
             builder.Entity<BlogPost>()
                 .HasIndex(b => new { b.Title, b.IsActive, b.SchedulePublishTime, b.IsPublished, b.PublishedDate, b.PublishedBy });
             builder.Entity<Cart>()
-                .HasIndex(c => new { c.CustomerId, c.Status, c.Mobile, c.Email, c.CreatedAt });
+                .HasIndex(c => new { c.CustomerId, c.SessionId, c.Status, c.Mobile, c.Email, c.CreatedAt });
             builder.Entity<CartItem>()
                 .HasIndex(c => new { c.ProductId, c.CartId });
             builder.Entity<Category>()
                 .HasIndex(c => new { c.ParentId, c.Title });
+            builder.Entity<Coupon>()
+                .HasIndex(c => new { c.IsStoreOwnerConfigured, c.StoreId, c.IsForAllStoresOwnByAStoreOwner, c.StoreOwnerId, c.AdminId, c.IsAdminConfigured, c.Code, c.IsActive, c.IsForCategory, c.CategoryId, c.IsForProduct, c.ProductId, c.IsForShipping, c.IsPercentageDiscount, c.IsAmountDiscount, c.IsSetPrice, c.IsSlotSet, c.StartDate, c.EndDate });
             builder.Entity<Customer>()
                 .HasIndex(c => new { c.FirstName, c.LastName, c.Email, c.PhoneNumber });
             builder.Entity<Deliveryman>()
                 .HasIndex(d => new { d.RiderId, d.FirstName, d.LastName, d.Email, d.PhoneNumber, d.DateOfBirth, d.State, d.IsVerified, d.IsEnabled, d.IsActive });
+            builder.Entity<OneKioskConfiguration>()
+                .HasIndex(o => new { o.Key });
             builder.Entity<Order>()
-                .HasIndex(o => new { o.Status, o.SubTotal, o.ItemDiscount, o.Tax, o.Shipping, o.Total, o.Promo, o.Discount, o.GrandTotal, o.FirstName, o.LastName, o.Mobile, o.Email, o.City, o.State, o.CreatedAt });
+                .HasIndex(o => new { o.Status, o.SubTotal, o.Tax, o.Shipping, o.Total, o.Promo, o.Discount, o.GrandTotal, o.FirstName, o.LastName, o.Mobile, o.Email, o.City, o.State, o.CreatedAt });
             builder.Entity<Privilege>()
                 .HasData( 
                 new Privilege() { Id = 1, Action = "Create Other Admin" },
-                new Privilege() { Id = 2, Action = "Deactivate Other Admin" },
+                new Privilege() { Id = 2, Action = "Activate/Deactivate Other Admin" },
                 new Privilege() { Id = 3, Action = "Create Blogpost" },
                 new Privilege() { Id = 4, Action = "Publish Blogpost" },
-                new Privilege() { Id = 5, Action = "Deactivate Blogpost" },
+                new Privilege() { Id = 5, Action = "Activate/Deactivate Blogpost" },
                 new Privilege() { Id = 6, Action = "Approve Store Creation" },
-                new Privilege() { Id = 7, Action = "Deactivate Store" },
+                new Privilege() { Id = 7, Action = "Activate/Deactivate Store" },
                 new Privilege() { Id = 8, Action = "Create Product Category" },
-                new Privilege() { Id = 9, Action = "Publish Product Review"}
+                new Privilege() { Id = 9, Action = "Publish Product Review"},
+                new Privilege() { Id = 10, Action = "Set Discount Code"},
+                new Privilege() { Id = 11, Action = "Activate/Disactivate Discount Code"}
                 );
             builder.Entity<Product>()
                 .HasIndex(p => new { p.Name, p.Brand, p.IsActive, p.IsVisible, p.DateCreated, p.Model });
@@ -63,6 +69,8 @@ namespace OK_OnBoarding.Data
                 .HasIndex(p => p.ProductId);
             builder.Entity<ProductPricing>()
                 .HasIndex(p => new { p.Price, p.SalePrice, p.SaleStartDate, p.SaleEndDate });
+            builder.Entity<ProductPricingHistory>()
+                .HasIndex(p => new { p.StoreOwnerId, p.ProductId, p.DateOfAction});
             builder.Entity<ProductReview>()
                 .HasIndex(p => new { p.Title, p.Rating, p.IsPublished, p.CreatedAt, p.PublishedAt });
             builder.Entity<Store>()
@@ -95,17 +103,20 @@ namespace OK_OnBoarding.Data
         public DbSet<Cart> Carts { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<Category> Categories { get; set; }
+        public DbSet<Coupon> Coupons { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<CustomerToken> CustomerTokens { get; set; }
         public DbSet<Deliveryman> DeliveryMen { get; set; }
         public DbSet<DeliverymanToken> DeliverymenTokens { get; set; }
         public DbSet<Error> ErrorLogs { get; set; }
+        public DbSet<OneKioskConfiguration> Configurations { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<Privilege> Priviliges { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<ProductCategory> ProductCategories { get; set; }
         public DbSet<ProductImage> ProductImage { get; set; }
         public DbSet<ProductPricing> ProductPricing { get; set; }
+        public DbSet<ProductPricingHistory> ProductPricingHistories { get; set; }
         public DbSet<ProductReview> ProductReviews { get; set; }
         public DbSet<Store> Stores { get; set; }
         public DbSet<StoreOwner> StoreOwners { get; set; }

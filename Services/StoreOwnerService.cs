@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OK_OnBoarding.Contracts.V1.Requests;
@@ -21,6 +22,7 @@ namespace OK_OnBoarding.Services
 {
     public class StoreOwnerService : IStoreOwnerService
     {
+        private readonly Random random = new Random();
         private readonly DataContext _dataContext;
         private readonly JwtSettings _jwtSettings;
         private readonly IFacebookAuthService _facebookAuthService;
@@ -352,6 +354,151 @@ namespace OK_OnBoarding.Services
 
         }
 
+        public async Task<GenericResponse> ConfigureDiscountAsync(StoreOwnerConfigureDiscountRequest request)
+        {
+            var storeOwnerExist = await _dataContext.StoreOwners.FirstOrDefaultAsync(s => s.Id == request.StoreOwnerId);
+            if (storeOwnerExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Storeowner." };
+            if (!storeOwnerExist.IsVerified)
+                return new GenericResponse { Status = false, Message = "Please verify with OTP sent to your phone/email." };
+
+            var storeExist = await _dataContext.Stores.FirstOrDefaultAsync(s => s.Id == request.StoreId);
+            if (storeExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Store." };
+            if (storeExist.StoreOwnerId != request.StoreOwnerId)
+                return new GenericResponse { Status = false, Message = "Store not for Storeowner." };
+
+            var utility = new OnekioskUtility();
+
+            var validationResponse = utility.ValidateDiscountInputs(request.IsPercentageDiscount, request.IsAmountDiscount, request.IsSetPrice, request.PercentageDiscount);
+            if (!validationResponse.Status)
+                return validationResponse;
+
+            var discountConfiguration = new Coupon {
+                IsStoreOwnerConfigured = true,
+                StoreId = request.StoreId,
+                IsForAllStoresOwnByAStoreOwner = request.IsForAllStoresOwnByAStoreOwner,
+                StoreOwnerId = request.StoreOwnerId,
+                Code = GenerateCouponCode(_appSettings.LengthOfCouponCode),
+                Title = request.Title,
+                IsActive = request.IsActive,
+                AdminId = null,
+                IsAdminConfigured = false,
+                IsForCategory = request.IsForCategory,
+                CategoryId = request.CategoryId,
+                IsForProduct = request.IsForProduct,
+                ProductId = request.ProductId,
+                IsForAllProducts = request.IsForAllProduct,
+                IsForShipping = request.IsForShipping,
+                IsForPrice = request.IsForPrice,
+                IsSlotSet = request.IsSlotSet,
+                AllocatedSlot = request.AllocatedSlot,
+                StartDate = request.StartDate,
+                EndDate = request.EndDate,
+                IsPercentageDiscount = request.IsPercentageDiscount,
+                PercentageDiscount = request.PercentageDiscount,
+                IsAmountDiscount = request.IsAmountDiscount,
+                AmountDiscount = request.AmountDiscount,
+                IsSetPrice = request.IsSetPrice,
+                SetPrice = request.SetPrice
+            };
+
+            await _dataContext.Coupons.AddAsync(discountConfiguration);
+            var created = 0;
+            try
+            {
+                created = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (created <= 0)
+                return new GenericResponse { Status = false, Message = "Couldn't create Discount Coupon." };
+
+            // Log to StoreOwnerActivityLogs {Hangfire}
+            await _dataContext.StoreOwnerActivityLogs.AddAsync(new StoreOwnerActivityLog { DiscountId = discountConfiguration.Id, StoreOwnerId = request.StoreOwnerId, StoreId = request.StoreId, Action = StoreOwnerActionsEnum.DISCOUNT_CREATION.ToString(), DateOfAction = DateTime.Now });
+
+            return new GenericResponse { Status = true, Message = "Success", Data = discountConfiguration };
+        }
+
+        public async Task<GenericResponse> ActivateDiscountAsync(StoreOwnerActivateDiscountRequest request)
+        {
+            var storeOwnerValidationResponse = await ValidateStoreOwner(request.StoreOwnerId);
+            if (!storeOwnerValidationResponse.Status)
+                return storeOwnerValidationResponse;
+
+            var configuredDiscountExist = await _dataContext.Coupons.FirstOrDefaultAsync(c => c.Id == request.DiscountId);
+            if (configuredDiscountExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Discount Id" };
+
+            if (configuredDiscountExist.IsActive == request.Activate)
+            {
+                return new GenericResponse { Status = false, Message = configuredDiscountExist.IsActive ? "Discount is already active" : "Discount is already inactive" };
+            }
+
+            if (configuredDiscountExist.StoreOwnerId != request.StoreOwnerId)
+                return new GenericResponse { Status = false, Message = "Discount does not belong to any of your stores." };
+
+            configuredDiscountExist.IsActive = request.Activate;
+            _dataContext.Entry(configuredDiscountExist).State = EntityState.Modified;
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (updated <= 0)
+                return new GenericResponse { Status = false, Message = request.Activate ? "Failed to activate Discount" : "Failed to deactivate Discount" };
+
+            // Log to StoreOwnerActivityLogs {Hangfire}
+            await _dataContext.StoreOwnerActivityLogs.AddAsync(new StoreOwnerActivityLog { DiscountId = configuredDiscountExist.Id, StoreOwnerId = request.StoreOwnerId, Action = request.Activate ? StoreOwnerActionsEnum.ACTIVATE_DISCOUNT.ToString() : StoreOwnerActionsEnum.DEACTIVATE_DISCOUNT.ToString(), DateOfAction = DateTime.Now });
+
+            return new GenericResponse { Status = true, Message = "Success" };
+        }
+
+        public async Task<List<Coupon>> GetAllStoreDiscountsAsync(Guid StoreOwnerId, Guid StoreId, PaginationFilter paginationFilter = null)
+        {
+            List<Coupon> allDiscounts = null;
+            if (paginationFilter == null)
+            {
+                allDiscounts = await _dataContext.Coupons.Where(c => c.IsStoreOwnerConfigured && c.StoreOwnerId == StoreOwnerId && c.StoreId == StoreId).ToListAsync<Coupon>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allDiscounts = await _dataContext.Coupons.Where(c => c.IsStoreOwnerConfigured && c.StoreOwnerId == StoreOwnerId && c.StoreId == StoreId).Skip(skip).Take(paginationFilter.PageSize).ToListAsync();
+            }
+            return allDiscounts;
+        }
+
+        public async Task<List<Coupon>> GetAllStoreOwnerDiscountsAsync(Guid StoreOwnerId, PaginationFilter paginationFilter = null)
+        {
+            List<Coupon> allDiscounts = null;
+            if (paginationFilter == null)
+            {
+                allDiscounts = await _dataContext.Coupons.Where(c => c.IsStoreOwnerConfigured && c.StoreOwnerId == StoreOwnerId).ToListAsync<Coupon>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allDiscounts = await _dataContext.Coupons.Where(c => c.IsStoreOwnerConfigured && c.StoreOwnerId == StoreOwnerId).Skip(skip).Take(paginationFilter.PageSize).ToListAsync();
+            }
+            return allDiscounts;
+        }
+
+        public async Task<GenericResponse> GetDiscountByIdAsync(Guid StoreOwnerId, Guid Id)
+        {
+            var discount = await _dataContext.Coupons.FirstOrDefaultAsync(c => c.Id == Id && c.StoreOwnerId == StoreOwnerId);
+            if (discount == null)
+                return new GenericResponse { Status = false, Message = "Invalid Discount" };
+
+            return new GenericResponse { Status = true, Message = "Success", Data = discount };
+        }
+
         private string GenerateAuthenticationTokenForStoreOwner(StoreOwner storeOwner)
         {
             var claims = new[]
@@ -377,6 +524,24 @@ namespace OK_OnBoarding.Services
                 );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public async Task<GenericResponse> ValidateStoreOwner(Guid storeOwnerId)
+        {
+            var storeOwnerExist = await _dataContext.StoreOwners.FirstOrDefaultAsync(s => s.Id == storeOwnerId);
+            if (storeOwnerExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Storeowner." };
+            if (!storeOwnerExist.IsVerified)
+                return new GenericResponse { Status = false, Message = "Please verify with OTP sent to your phone/email." };
+
+            return new GenericResponse { Status = true, Message = "Valid" };
+        }
+
+        public string GenerateCouponCode(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
         }
     }
 }

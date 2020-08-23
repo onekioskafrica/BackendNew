@@ -13,19 +13,12 @@ namespace OK_OnBoarding.Entities
          */
         public int Id { get; set; }
         public Guid CustomerId { get; set; }
-
-        [ForeignKey("Store")]
-        public Guid StoreId { get; set; }
-
         public string SessionId { get; set; }
         public string Token { get; set; }
         public string Status { get; set; } // Can be New, Checkout, Paid, Failed, Shipped, Delivered, Returned, Completed
 
         [Column(TypeName = "decimal(18, 2)")]
         public decimal SubTotal { get; set; }
-
-        [Column(TypeName = "decimal(18, 2)")]
-        public decimal ItemDiscount { get; set; }
 
         [Column(TypeName = "decimal(18, 4)")]
         public decimal Tax { get; set; }
@@ -36,6 +29,27 @@ namespace OK_OnBoarding.Entities
         [Column(TypeName = "decimal(18, 2)")]
         public decimal Total { get; set; } // The total price of the Order including tax and shipping. It excludes the Item Discount
         public string Promo { get; set; } // The promo code of the Order
+
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal StoreOwnerShippingDiscount { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+
+        public decimal StoreOwnerPriceDiscount { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+
+        public decimal OnekioskShippingDiscount { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+
+        public decimal OnekioskPriceDiscount { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal ShippingDiscount { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal PriceDiscount { get; set; }
 
         [Column(TypeName = "decimal(18, 2)")]
         public decimal Discount { get; set; } // The total discount of the Order based on the promo code or store discount.
@@ -57,7 +71,6 @@ namespace OK_OnBoarding.Entities
 
 
         public Customer Customer { get; set; } // The Customer that made this order
-        public Store Store { get; set; } // The store that owns this order
         
     }
 }

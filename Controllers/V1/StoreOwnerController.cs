@@ -158,5 +158,90 @@ namespace OK_OnBoarding.Controllers.V1
             return Ok(genericResponse);
         }
 
+        [Authorize(Roles = Roles.StoreOwner)]
+        [HttpPost(ApiRoute.StoreOwner.ConfigureDiscount)]
+        public async Task<IActionResult> ConfigureDiscount([FromBody] StoreOwnerConfigureDiscountRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+
+            var genericResponse = await _storeOwnerService.ConfigureDiscountAsync(request);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [Authorize(Roles = Roles.StoreOwner)]
+        [HttpPost(ApiRoute.StoreOwner.ActivateDiscount)]
+        public async Task<IActionResult> ActivateDiscount([FromBody] StoreOwnerActivateDiscountRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+
+            var genericResponse = await _storeOwnerService.ActivateDiscountAsync(request);
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [Authorize(Roles = Roles.StoreOwner)]
+        [HttpGet(ApiRoute.StoreOwner.GetAllStoreDiscounts)]
+        public async Task<IActionResult> GetAllStoreDiscounts([FromQuery] Guid StoreId, [FromQuery] Guid StoreOwnerId, [FromQuery] PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+            var allStoreDiscounts = await _storeOwnerService.GetAllStoreDiscountsAsync(StoreOwnerId, StoreId, pagination);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<Coupon>(allStoreDiscounts));
+
+            var paginationResponse = new PagedResponse<Coupon>
+            {
+                Data = allStoreDiscounts,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
+            };
+            return Ok(paginationResponse);
+        }
+
+        [Authorize(Roles = Roles.StoreOwner)]
+        [HttpGet(ApiRoute.StoreOwner.GetAllStoreOwnerDiscounts)]
+        public async Task<IActionResult> GetAllStoreOwnerDiscounts([FromQuery] Guid StoreOwnerId, [FromQuery] PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+            var allStoreDiscounts = await _storeOwnerService.GetAllStoreOwnerDiscountsAsync(StoreOwnerId, pagination);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<Coupon>(allStoreDiscounts));
+
+            var paginationResponse = new PagedResponse<Coupon>
+            {
+                Data = allStoreDiscounts,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
+            };
+            return Ok(paginationResponse);
+        }
+
+        [Authorize(Roles = Roles.StoreOwner)]
+        [HttpGet(ApiRoute.StoreOwner.GetDiscountById)]
+        public async Task<IActionResult> GetDiscountById([FromQuery] Guid DiscountId, [FromQuery] Guid StoreOwnerId)
+        {
+            var genericResponse = await _storeOwnerService.GetDiscountByIdAsync(StoreOwnerId, DiscountId);
+
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
     }
 }

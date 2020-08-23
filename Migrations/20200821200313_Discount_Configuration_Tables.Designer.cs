@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OK_OnBoarding.Data;
 
 namespace OK_OnBoarding.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20200821200313_Discount_Configuration_Tables")]
+    partial class Discount_Configuration_Tables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1067,6 +1069,9 @@ namespace OK_OnBoarding.Migrations
                     b.Property<string>("Status")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<decimal>("StoreOwnerPriceDiscount")
                         .HasColumnType("decimal(18, 2)");
 
@@ -1091,6 +1096,8 @@ namespace OK_OnBoarding.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
+
+                    b.HasIndex("StoreId");
 
                     b.HasIndex("Status", "SubTotal", "Tax", "Shipping", "Total", "Promo", "Discount", "GrandTotal", "FirstName", "LastName", "Mobile", "Email", "City", "State", "CreatedAt");
 
@@ -2210,6 +2217,12 @@ namespace OK_OnBoarding.Migrations
                     b.HasOne("OK_OnBoarding.Entities.Customer", "Customer")
                         .WithMany("Orders")
                         .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OK_OnBoarding.Entities.Store", "Store")
+                        .WithMany()
+                        .HasForeignKey("StoreId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

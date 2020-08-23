@@ -39,5 +39,12 @@ namespace OK_OnBoarding.Services
         Task<List<StoreReview>> GetUnpublishedStoreReviewsAsync(PaginationFilter paginationFilter = null);
         Task<GenericResponse> GetStoreReviewByIdAsync(Guid StoreReviewId);
         Task<GenericResponse> PublishStoreReviewAsync(PublishStoreReview request);
+        Task<GenericResponse> ConfigureDiscountAsync(AdminConfigureDiscountRequest request);
+        Task<GenericResponse> ActivateDiscountAsync(ActivateDiscountRequest request);
+        Task<List<Coupon>> GetAllAdminConfiguredDiscountsAsync(PaginationFilter paginationFilter = null);
+        Task<List<Coupon>> GetAllStoreOwnerConfiguredDiscountsAsync(PaginationFilter paginationFilter = null);
+        Task<GenericResponse> GetDiscountByIdAsync(Guid Id);
+        /*Task<GenericResponse> SetExtraShippingForBuyingFromMultipleStores(ExtraShippingRequest request);
+        Task<GenericResponse> UpdateExtraShippingForBuyingFromMultipleStores();*/
     }
 }

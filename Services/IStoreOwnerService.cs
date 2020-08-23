@@ -19,5 +19,10 @@ namespace OK_OnBoarding.Services
         Task<AuthenticationResponse> FacebookLoginStoreOwnerAsync(string accessToken);
         Task<GenericResponse> CloseStoreAsync(CloseStoreRequest request);
         Task<GenericResponse> SetProductVisibilityAsync(SetProductVisibilityRequest request);
+        Task<GenericResponse> ConfigureDiscountAsync(StoreOwnerConfigureDiscountRequest request);
+        Task<GenericResponse> ActivateDiscountAsync(StoreOwnerActivateDiscountRequest request);
+        Task<List<Coupon>> GetAllStoreOwnerDiscountsAsync(Guid StoreOwnerId, PaginationFilter paginationFilter = null);
+        Task<List<Coupon>> GetAllStoreDiscountsAsync(Guid StoreOwnerId, Guid StoreId, PaginationFilter paginationFilter = null);
+        Task<GenericResponse> GetDiscountByIdAsync(Guid StoreOwnerId, Guid Id);
     }
 }

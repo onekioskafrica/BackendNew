@@ -20,5 +20,6 @@ namespace OK_OnBoarding.Services
         Task<GenericResponse> GetProductByIdAsync(Guid productId);
         Task<GenericResponse> ReviewProductAsync(ReviewProductRequest request);
         Task<List<ProductReview>> GetProductReviewAsync(Guid ProductId, PaginationFilter pagination = null);
+        Task<GenericResponse> RestockProductAsync(RestockProductRequest request);
     }
 }

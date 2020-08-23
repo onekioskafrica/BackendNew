@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OK_OnBoarding.Data;
 
 namespace OK_OnBoarding.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20200818150044_Added_Total_To_CartItem_Tbl")]
+    partial class Added_Total_To_CartItem_Tbl
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -282,9 +284,6 @@ namespace OK_OnBoarding.Migrations
                     b.Property<Guid?>("DeliverymanId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("DiscountId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid>("PerformerId")
                         .HasColumnType("uniqueidentifier");
 
@@ -313,8 +312,6 @@ namespace OK_OnBoarding.Migrations
                     b.HasIndex("DateOfAction");
 
                     b.HasIndex("DeliverymanId");
-
-                    b.HasIndex("DiscountId");
 
                     b.HasIndex("ProductCategoryId");
 
@@ -552,9 +549,6 @@ namespace OK_OnBoarding.Migrations
                     b.Property<string>("SKU")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("StoreId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<decimal>("Total")
                         .HasColumnType("decimal(18, 2)");
 
@@ -564,8 +558,6 @@ namespace OK_OnBoarding.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CartId");
-
-                    b.HasIndex("StoreId");
 
                     b.HasIndex("ProductId", "CartId");
 
@@ -599,106 +591,6 @@ namespace OK_OnBoarding.Migrations
                     b.HasIndex("ParentId", "Title");
 
                     b.ToTable("Categories");
-                });
-
-            modelBuilder.Entity("OK_OnBoarding.Entities.Coupon", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("AdminId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("AllocatedSlot")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("AmountDiscount")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Code")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime?>("EndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsAdminConfigured")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsAmountDiscount")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsForAllProducts")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsForAllStoresOwnByAStoreOwner")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsForCategory")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsForPrice")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsForProduct")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsForShipping")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsPercentageDiscount")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsSetPrice")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsSlotSet")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsStoreOwnerConfigured")
-                        .HasColumnType("bit");
-
-                    b.Property<decimal>("PercentageDiscount")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<Guid?>("ProductId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("SetPrice")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<int>("SlotUsed")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("StoreId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("StoreOwnerId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Title")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AdminId");
-
-                    b.HasIndex("StoreId");
-
-                    b.HasIndex("StoreOwnerId");
-
-                    b.HasIndex("IsStoreOwnerConfigured", "StoreId", "IsForAllStoresOwnByAStoreOwner", "StoreOwnerId", "AdminId", "IsAdminConfigured", "Code", "IsActive", "IsForCategory", "CategoryId", "IsForProduct", "ProductId", "IsForShipping", "IsPercentageDiscount", "IsAmountDiscount", "IsSetPrice", "IsSlotSet", "StartDate", "EndDate");
-
-                    b.ToTable("Coupons");
                 });
 
             modelBuilder.Entity("OK_OnBoarding.Entities.Customer", b =>
@@ -974,26 +866,6 @@ namespace OK_OnBoarding.Migrations
                     b.ToTable("ErrorLogs");
                 });
 
-            modelBuilder.Entity("OK_OnBoarding.Entities.OneKioskConfiguration", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<string>("Key")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<decimal>("Value")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Key");
-
-                    b.ToTable("Configurations");
-                });
-
             modelBuilder.Entity("OK_OnBoarding.Entities.Order", b =>
                 {
                     b.Property<int>("Id")
@@ -1025,6 +897,9 @@ namespace OK_OnBoarding.Migrations
                     b.Property<decimal>("GrandTotal")
                         .HasColumnType("decimal(18, 2)");
 
+                    b.Property<decimal>("ItemDiscount")
+                        .HasColumnType("decimal(18, 2)");
+
                     b.Property<string>("LastName")
                         .HasColumnType("nvarchar(450)");
 
@@ -1040,15 +915,6 @@ namespace OK_OnBoarding.Migrations
                     b.Property<string>("Mobile")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<decimal>("OnekioskPriceDiscount")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<decimal>("OnekioskShippingDiscount")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<decimal>("PriceDiscount")
-                        .HasColumnType("decimal(18, 2)");
-
                     b.Property<string>("Promo")
                         .HasColumnType("nvarchar(450)");
 
@@ -1058,20 +924,14 @@ namespace OK_OnBoarding.Migrations
                     b.Property<decimal>("Shipping")
                         .HasColumnType("decimal(18, 2)");
 
-                    b.Property<decimal>("ShippingDiscount")
-                        .HasColumnType("decimal(18, 2)");
-
                     b.Property<string>("State")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Status")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<decimal>("StoreOwnerPriceDiscount")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<decimal>("StoreOwnerShippingDiscount")
-                        .HasColumnType("decimal(18, 2)");
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("SubTotal")
                         .HasColumnType("decimal(18, 2)");
@@ -1092,7 +952,9 @@ namespace OK_OnBoarding.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.HasIndex("Status", "SubTotal", "Tax", "Shipping", "Total", "Promo", "Discount", "GrandTotal", "FirstName", "LastName", "Mobile", "Email", "City", "State", "CreatedAt");
+                    b.HasIndex("StoreId");
+
+                    b.HasIndex("Status", "SubTotal", "ItemDiscount", "Tax", "Shipping", "Total", "Promo", "Discount", "GrandTotal", "FirstName", "LastName", "Mobile", "Email", "City", "State", "CreatedAt");
 
                     b.ToTable("Orders");
                 });
@@ -1120,7 +982,7 @@ namespace OK_OnBoarding.Migrations
                         new
                         {
                             Id = 2,
-                            Action = "Activate/Deactivate Other Admin"
+                            Action = "Deactivate Other Admin"
                         },
                         new
                         {
@@ -1135,7 +997,7 @@ namespace OK_OnBoarding.Migrations
                         new
                         {
                             Id = 5,
-                            Action = "Activate/Deactivate Blogpost"
+                            Action = "Deactivate Blogpost"
                         },
                         new
                         {
@@ -1145,7 +1007,7 @@ namespace OK_OnBoarding.Migrations
                         new
                         {
                             Id = 7,
-                            Action = "Activate/Deactivate Store"
+                            Action = "Deactivate Store"
                         },
                         new
                         {
@@ -1156,16 +1018,6 @@ namespace OK_OnBoarding.Migrations
                         {
                             Id = 9,
                             Action = "Publish Product Review"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            Action = "Set Discount Code"
-                        },
-                        new
-                        {
-                            Id = 11,
-                            Action = "Activate/Disactivate Discount Code"
                         });
                 });
 
@@ -1317,9 +1169,6 @@ namespace OK_OnBoarding.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsSalePriceSet")
-                        .HasColumnType("bit");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18, 2)");
@@ -1549,9 +1398,6 @@ namespace OK_OnBoarding.Migrations
 
                     b.Property<DateTime?>("DateOfAction")
                         .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("DiscountId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("ProductId")
                         .HasColumnType("uniqueidentifier");
@@ -2083,10 +1929,6 @@ namespace OK_OnBoarding.Migrations
                         .WithMany()
                         .HasForeignKey("DeliverymanId");
 
-                    b.HasOne("OK_OnBoarding.Entities.Coupon", "Coupon")
-                        .WithMany()
-                        .HasForeignKey("DiscountId");
-
                     b.HasOne("OK_OnBoarding.Entities.Category", "Category")
                         .WithMany()
                         .HasForeignKey("ProductCategoryId");
@@ -2164,27 +2006,6 @@ namespace OK_OnBoarding.Migrations
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("OK_OnBoarding.Entities.Store", "Store")
-                        .WithMany("CartItems")
-                        .HasForeignKey("StoreId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("OK_OnBoarding.Entities.Coupon", b =>
-                {
-                    b.HasOne("OK_OnBoarding.Entities.Admin", "Admin")
-                        .WithMany()
-                        .HasForeignKey("AdminId");
-
-                    b.HasOne("OK_OnBoarding.Entities.Store", "Store")
-                        .WithMany()
-                        .HasForeignKey("StoreId");
-
-                    b.HasOne("OK_OnBoarding.Entities.StoreOwner", "StoreOwner")
-                        .WithMany()
-                        .HasForeignKey("StoreOwnerId");
                 });
 
             modelBuilder.Entity("OK_OnBoarding.Entities.CustomerToken", b =>
@@ -2210,6 +2031,12 @@ namespace OK_OnBoarding.Migrations
                     b.HasOne("OK_OnBoarding.Entities.Customer", "Customer")
                         .WithMany("Orders")
                         .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OK_OnBoarding.Entities.Store", "Store")
+                        .WithMany()
+                        .HasForeignKey("StoreId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

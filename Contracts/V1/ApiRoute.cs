@@ -40,6 +40,11 @@ namespace OK_OnBoarding.Contracts
             public const string GetUnpublishedStoreReviews = Base + "/admins/getunpublishedstorereviews";
             public const string GetStoreReviewById = Base + "/admins/getstorereviewebyid";
             public const string PublishStoreReview = Base + "/admins/publishstorereview";
+            public const string ConfigureDiscount = Base + "/admins/configurediscount";
+            public const string ActivateConfiguredDiscount = Base + "/admins/activateadminconfigureddiscount";
+            public const string GetAllAdminConfiguredDiscounts = Base + "/admins/getalladminconfigureddiscounts";
+            public const string GetAllStoreownerConfiguredDiscounts = Base + "/admins/getallstoreownerconfigureddiscounts";
+            public const string GetDiscountById = Base + "/admins/getdiscountbyid";
         }
 
         public static class Products
@@ -53,6 +58,16 @@ namespace OK_OnBoarding.Contracts
             public const string GetProductById = Base + "/products/getproductbyid";
             public const string ReviewProduct = Base + "/products/reviewproduct";
             public const string GetProductReviews = Base + "/products/getproductreviews";
+            public const string RestockProduct = Base + "/products/restock";
+        }
+
+        public static class Cart
+        {
+            public const string CreateCart = Base + "/shoppingcart/create";
+            public const string AddCartItem = Base + "/shoppingcart/additem";
+            public const string RemoveCartItem = Base + "/shoppingcart/removeitem";
+            public const string GetCart = Base + "/shoppingcart/getcart";
+            public const string Checkout = Base + "/shoppingcart/checkout";
         }
 
         public static class Customer
@@ -81,6 +96,11 @@ namespace OK_OnBoarding.Contracts
             public const string ForgotPassword = Base + "/storeowners/forgotpassword";
             public const string CloseStore = Base + "/storeowners/closestore";
             public const string SetProductVisibility = Base + "/storeowners/setproductvisibility";
+            public const string ConfigureDiscount = Base + "/storeowners/configurediscount";
+            public const string ActivateDiscount = Base + "/storeowners/activatediscount";
+            public const string GetAllStoreOwnerDiscounts = Base + "/storeowners/getallstoreownerdiscounts";
+            public const string GetAllStoreDiscounts = Base + "/storeowners/getallstorediscounts";
+            public const string GetDiscountById = Base + "/storeowners/getdiscountbyid";
         }
 
         public static class Deliveryman

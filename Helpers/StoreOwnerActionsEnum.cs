@@ -15,5 +15,9 @@ namespace OK_OnBoarding.Helpers
         HIDE_PRODUCT = 6,
         OPEN_PRODUCT = 7,
         OPEN_STORE = 8,
+        RESTOCK_PRODUCT = 9,
+        DISCOUNT_CREATION = 10,
+        DEACTIVATE_DISCOUNT = 11,
+        ACTIVATE_DISCOUNT = 12
     }
 }
