@@ -7,6 +7,7 @@ using OK_OnBoarding.Domains;
 using OK_OnBoarding.Entities;
 using OK_OnBoarding.Helpers;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
@@ -126,7 +127,8 @@ namespace OK_OnBoarding.Services
             var cartExist = await _dataContext.Carts.Include(c => c.CartItems).FirstOrDefaultAsync(c => c.Id == request.CartId && c.SessionId == request.SessionId);
             if (cartExist == null)
                 return new GenericResponse { Status = false, Message = "Invalid Cart" };
-
+            if (cartExist.Status != CartStatusEnum.NEW.ToString())
+                return new GenericResponse { Status = false, Message = "This Cart has already been checked out." };
             var cartItemsInsideCart = cartExist.CartItems.Where(c => c.IsActive).ToList();
             if (cartItemsInsideCart.Count == 0)
                 return new GenericResponse { Status = false, Message = "Cart is empty" };
@@ -166,6 +168,21 @@ namespace OK_OnBoarding.Services
             };
 
             await _dataContext.Orders.AddAsync(order);
+
+            var payments = new List<Payment>();
+            foreach(var cartItem in cartItemsInsideCart)
+            {
+                var payment = new Payment() {
+                    SessionId = order.SessionId,
+                    StoreId = cartItem.StoreId,
+                    GrandTotal = order.GrandTotal,
+                    IsSettled = false,
+                    AmountPaidToOneKiosk = 0.00M,
+                    AmountPaidToStore = 0.00M
+                };
+                payments.Add(payment);
+            }
+            await _dataContext.Payments.AddRangeAsync(payments);
             var created = 0;
             try
             {
@@ -501,7 +518,7 @@ namespace OK_OnBoarding.Services
             var cartExist = await _dataContext.Carts.FirstOrDefaultAsync(c => c.Id == cartId);
             if (cartExist == null)
                 return new GenericResponse { Status = false, Message = "Invalid Cart Id" };
-            var cartItems = await _dataContext.CartItems.Where(c => c.IsActive).ToListAsync();
+            var cartItems = await _dataContext.CartItems.Where(c => c.CartId == cartId && c.IsActive).ToListAsync();
             cartExist.CartItems = cartItems;
 
             return new GenericResponse { Status = true, Message = "Success", Data = cartExist };
@@ -528,6 +545,54 @@ namespace OK_OnBoarding.Services
                 return new GenericResponse { Status = false, Message = "Unable to remove item." };
 
             return new GenericResponse { Status = true, Message = "Item removed successfully." };
+        }
+
+        public async Task<GenericResponse> GetOrderAsync(string sessionId)
+        {
+            Order orderExist = null;
+            try
+            {
+                orderExist = await _dataContext.Orders.FirstOrDefaultAsync(o => o.SessionId == sessionId);
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            
+            if (orderExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Order Id" };
+
+            return new GenericResponse { Status = true, Message = "Success", Data = orderExist };
+        }
+
+        public async Task<List<Order>> GetAllCustomerOrdersAsync(Guid CustomerId, PaginationFilter paginationFilter = null)
+        {
+            List<Order> allCustomerOrders = null;
+            if(paginationFilter == null)
+            {
+                allCustomerOrders = await _dataContext.Orders.Where(o => o.CustomerId == CustomerId).ToListAsync<Order>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allCustomerOrders = await _dataContext.Orders.Where(o => o.CustomerId == CustomerId).Skip(skip).Take(paginationFilter.PageSize).ToListAsync<Order>();
+            }
+            return allCustomerOrders;
+        }
+
+        public async Task<List<Cart>> GetAllCustomerCartsAsync(Guid CustomerId, PaginationFilter paginationFilter = null)
+        {
+            List<Cart> allCustomerCarts = null;
+            if (paginationFilter == null)
+            {
+                allCustomerCarts = await _dataContext.Carts.Where(c => c.CustomerId == CustomerId).ToListAsync<Cart>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allCustomerCarts = await _dataContext.Carts.Where(c => c.CustomerId == CustomerId).Skip(skip).Take(paginationFilter.PageSize).ToListAsync<Cart>();
+            }
+            return allCustomerCarts;
         }
     }
 }

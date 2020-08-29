@@ -47,6 +47,8 @@ namespace OK_OnBoarding.Data
                 .HasIndex(o => new { o.Key });
             builder.Entity<Order>()
                 .HasIndex(o => new { o.Status, o.SubTotal, o.Tax, o.Shipping, o.Total, o.Promo, o.Discount, o.GrandTotal, o.FirstName, o.LastName, o.Mobile, o.Email, o.City, o.State, o.CreatedAt });
+            builder.Entity<Payment>()
+                .HasIndex(p => new { p.SessionId, p.GrandTotal, p.IsSettled, p.AmountPaidToStore, p.AmountPaidToOneKiosk });
             builder.Entity<Privilege>()
                 .HasData( 
                 new Privilege() { Id = 1, Action = "Create Other Admin" },
@@ -111,6 +113,7 @@ namespace OK_OnBoarding.Data
         public DbSet<Error> ErrorLogs { get; set; }
         public DbSet<OneKioskConfiguration> Configurations { get; set; }
         public DbSet<Order> Orders { get; set; }
+        public DbSet<Payment> Payments { get; set; }
         public DbSet<Privilege> Priviliges { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<ProductCategory> ProductCategories { get; set; }

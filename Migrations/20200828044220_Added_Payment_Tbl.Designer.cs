@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OK_OnBoarding.Data;
 
 namespace OK_OnBoarding.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20200828044220_Added_Payment_Tbl")]
+    partial class Added_Payment_Tbl
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1103,29 +1105,22 @@ namespace OK_OnBoarding.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<decimal>("AmountPaidToOneKiosk")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<decimal>("AmountPaidToStore")
-                        .HasColumnType("decimal(18, 2)");
-
                     b.Property<decimal>("GrandTotal")
                         .HasColumnType("decimal(18, 2)");
 
-                    b.Property<bool>("IsSettled")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("SessionId")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
 
                     b.Property<Guid>("StoreId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StoreId");
+                    b.HasIndex("GrandTotal");
 
-                    b.HasIndex("SessionId", "GrandTotal", "IsSettled", "AmountPaidToStore", "AmountPaidToOneKiosk");
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("StoreId");
 
                     b.ToTable("Payments");
                 });
@@ -2249,6 +2244,12 @@ namespace OK_OnBoarding.Migrations
 
             modelBuilder.Entity("OK_OnBoarding.Entities.Payment", b =>
                 {
+                    b.HasOne("OK_OnBoarding.Entities.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("OK_OnBoarding.Entities.Store", "Store")
                         .WithMany()
                         .HasForeignKey("StoreId")
