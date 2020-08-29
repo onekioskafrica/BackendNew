@@ -68,6 +68,9 @@ namespace OK_OnBoarding.Contracts
             public const string RemoveCartItem = Base + "/shoppingcart/removeitem";
             public const string GetCart = Base + "/shoppingcart/getcart";
             public const string Checkout = Base + "/shoppingcart/checkout";
+            public const string GetOrder = Base + "/shoppingcart/getorderbysession";
+            public const string GetAllOrders = Base + "/shoppingcart/getallcustomerorders";
+            public const string GetAllCarts = Base + "/shoppingcart/getallcustomercarts";
         }
 
         public static class Customer

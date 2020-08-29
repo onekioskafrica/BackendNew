@@ -108,6 +108,8 @@ namespace OK_OnBoarding.Services
             {
                 return new GenericResponse { Status = false, Message = "Error Occurred." };
             }
+            if (category == null)
+                return new GenericResponse { Status = false, Message = "Invalid Category ID" };
             return new GenericResponse { Status = true, Message = "Success", Data = category };
         }
 

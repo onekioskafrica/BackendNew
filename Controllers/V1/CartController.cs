@@ -1,7 +1,11 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OK_OnBoarding.Contracts;
 using OK_OnBoarding.Contracts.V1.Requests;
+using OK_OnBoarding.Contracts.V1.Requests.Queries;
+using OK_OnBoarding.Contracts.V1.Responses;
+using OK_OnBoarding.Domains;
 using OK_OnBoarding.Entities;
 using OK_OnBoarding.Services;
 using System;
@@ -16,10 +20,12 @@ namespace OK_OnBoarding.Controllers.V1
     public class CartController : Controller
     {
         private readonly ICartService _cartService;
+        private readonly IMapper _mapper;
 
-        public CartController(ICartService cartService)
+        public CartController(ICartService cartService, IMapper mapper)
         {
             _cartService = cartService;
+            _mapper = mapper;
         }
 
         [HttpPost(ApiRoute.Cart.CreateCart)]
@@ -66,6 +72,53 @@ namespace OK_OnBoarding.Controllers.V1
         public async Task<IActionResult> Checkout([FromQuery] CheckoutRequest request)
         {
             var genericResponse = await _cartService.CheckoutAsync(request);
+
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
+        [HttpGet(ApiRoute.Cart.GetAllCarts)]
+        public async Task<IActionResult> GetAllCarts([Required] Guid customerId, PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+            var allCustomerCarts = await _cartService.GetAllCustomerCartsAsync(customerId, pagination);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<Cart>(allCustomerCarts));
+
+            var paginationResponse = new PagedResponse<Cart>
+            {
+                Data = allCustomerCarts,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
+            };
+            return Ok(paginationResponse);
+        }
+
+        [HttpGet(ApiRoute.Cart.GetAllOrders)]
+        public async Task<IActionResult> GetCustomerOrders([Required] Guid customerId, PaginationQuery paginationQuery)
+        {
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+            var allCustomerOrders = await _cartService.GetAllCustomerOrdersAsync(customerId, pagination);
+
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+                return Ok(new PagedResponse<Order>(allCustomerOrders));
+
+            var paginationResponse = new PagedResponse<Order>
+            {
+                Data = allCustomerOrders,
+                PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,
+                PageSize = pagination.PageSize >= 1 ? pagination.PageSize : (int?)null
+            };
+            return Ok(paginationResponse);
+        }
+
+        [HttpGet(ApiRoute.Cart.GetOrder)]
+        public async Task<IActionResult> GetOrder([Required] string sessionId)
+        {
+            var genericResponse = await _cartService.GetOrderAsync(sessionId);
 
             if (!genericResponse.Status)
                 return BadRequest(genericResponse);
