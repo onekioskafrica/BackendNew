@@ -46,9 +46,9 @@ namespace OK_OnBoarding.Data
             builder.Entity<OneKioskConfiguration>()
                 .HasIndex(o => new { o.Key });
             builder.Entity<Order>()
-                .HasIndex(o => new { o.Status, o.SubTotal, o.Tax, o.Shipping, o.Total, o.Promo, o.Discount, o.GrandTotal, o.FirstName, o.LastName, o.Mobile, o.Email, o.City, o.State, o.CreatedAt });
+                .HasIndex(o => new { o.SessionId, o.Status, o.SubTotal, o.Tax, o.Shipping, o.Total, o.Promo, o.Discount, o.GrandTotal, o.FirstName, o.LastName, o.Mobile, o.Email, o.City, o.State, o.CreatedAt });
             builder.Entity<Payment>()
-                .HasIndex(p => new { p.SessionId, p.GrandTotal, p.IsSettled, p.AmountPaidToStore, p.AmountPaidToOneKiosk });
+                .HasIndex(p => new { p.CartItemId, p.SessionId, p.Total, p.IsSettled, p.AmountPaidToStore, p.AmountPaidToOneKiosk });
             builder.Entity<Privilege>()
                 .HasData( 
                 new Privilege() { Id = 1, Action = "Create Other Admin" },

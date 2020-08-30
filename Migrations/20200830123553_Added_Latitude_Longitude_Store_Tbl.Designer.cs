@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OK_OnBoarding.Data;
 
 namespace OK_OnBoarding.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20200830123553_Added_Latitude_Longitude_Store_Tbl")]
+    partial class Added_Latitude_Longitude_Store_Tbl
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1109,8 +1111,8 @@ namespace OK_OnBoarding.Migrations
                     b.Property<decimal>("AmountPaidToStore")
                         .HasColumnType("decimal(18, 2)");
 
-                    b.Property<int>("CartItemId")
-                        .HasColumnType("int");
+                    b.Property<decimal>("GrandTotal")
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<bool>("IsSettled")
                         .HasColumnType("bit");
@@ -1127,23 +1129,14 @@ namespace OK_OnBoarding.Migrations
                     b.Property<string>("SessionId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<decimal>("StoreDiscountOnPrice")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<decimal>("StoreDiscountOnShipping")
-                        .HasColumnType("decimal(18, 2)");
-
                     b.Property<Guid>("StoreId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("Total")
-                        .HasColumnType("decimal(18, 2)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("StoreId");
 
-                    b.HasIndex("CartItemId", "SessionId", "Total", "IsSettled", "AmountPaidToStore", "AmountPaidToOneKiosk");
+                    b.HasIndex("SessionId", "GrandTotal", "IsSettled", "AmountPaidToStore", "AmountPaidToOneKiosk");
 
                     b.ToTable("Payments");
                 });

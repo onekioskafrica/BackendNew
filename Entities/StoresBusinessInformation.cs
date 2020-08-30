@@ -20,6 +20,8 @@ namespace OK_OnBoarding.Entities
         public string State { get; set; }
         public string Country { get; set; }
         
+        public Double Latitude { get; set; }
+        public Double Longitude { get; set; }
         public string TaxIdentificationNumber { get; set; }
         public string PersonInCharge { get; set; }
         public string BusinessRegistrationNumber { get; set; }

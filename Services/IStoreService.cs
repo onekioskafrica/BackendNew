@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using GeoCoordinatePortable;
+using Microsoft.AspNetCore.Http;
 using OK_OnBoarding.Contracts.V1.Requests;
 using OK_OnBoarding.Contracts.V1.Responses;
 using OK_OnBoarding.Domains;
@@ -18,7 +19,7 @@ namespace OK_OnBoarding.Services
         Task<GenericResponse> GetStoreByIdAsync(Guid storeId);
         Task<GenericResponse> GetStoreByStoreIdAsync(string storeId);
         Task<List<Store>> GetAllStoresByStoreOwnerIdAsync(Guid storeOwnerId, PaginationFilter paginationFilter = null);
-        Task<List<Store>> GetAllStoresAsync(PaginationFilter paginationFilter = null);
+        Task<List<Store>> GetAllStoresAsync(GeoCoordinate searchCoordinate, PaginationFilter paginationFilter = null);
         Task<GenericResponse> ReviewStoreAsync(ReviewStoreRequest request);
         Task<List<StoreReview>> GetStoreReviewsAsync(Guid storeId, PaginationFilter paginationFilter = null);
     }

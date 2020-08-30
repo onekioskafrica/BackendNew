@@ -133,12 +133,22 @@ namespace OK_OnBoarding.Services
             List<ProductReview> allProductReviews = null;
             if(paginationFilter == null)
             {
-                allProductReviews = await _dataContext.ProductReviews.Where(p => p.ProductId == ProductId && p.IsPublished).ToListAsync<ProductReview>();
+                allProductReviews = await _dataContext.ProductReviews.Include(p => p.Customer).Where(p => p.ProductId == ProductId && p.IsPublished).ToListAsync<ProductReview>();
             }
             else
             {
                 var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
-                allProductReviews = await _dataContext.ProductReviews.Where(p => p.ProductId == ProductId && p.IsPublished).Skip(skip).Take(paginationFilter.PageSize).ToListAsync<ProductReview>();
+                allProductReviews = await _dataContext.ProductReviews.Where(p => p.ProductId == ProductId && p.IsPublished).Include(p => p.Customer).Skip(skip).Take(paginationFilter.PageSize).ToListAsync<ProductReview>();
+            }
+            if(allProductReviews != null)
+            {
+                foreach(var review in allProductReviews)
+                {
+                    review.Customer.PasswordHash = null;
+                    review.Customer.PasswordSalt = null;
+                    review.Customer.Orders = null;
+                    review.Customer.Carts = null;
+                }
             }
             return allProductReviews;
         }

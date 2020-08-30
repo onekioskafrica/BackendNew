@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using GeoCoordinatePortable;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OK_OnBoarding.Contracts;
@@ -49,6 +50,9 @@ namespace OK_OnBoarding.Controllers.V1
         [HttpPost(ApiRoute.Store.UploadStoreBusinessInfo)]
         public async Task<IActionResult> UploadStoreBusinessInfo([FromForm] CreateStoreBusinessInfoRequest request)
         {
+            var searchCoordinate = new GeoCoordinate(request.Latitude, request.Longitude);
+            if (searchCoordinate.IsUnknown)
+                return BadRequest("Unknown Location.");
             if (!ModelState.IsValid)
             {
                 return BadRequest(new AuthFailedResponse
@@ -139,6 +143,16 @@ namespace OK_OnBoarding.Controllers.V1
             return Ok(genericResponse);
         }
 
+        [AllowAnonymous]
+        [HttpGet("/test/distance")]
+        public async Task<IActionResult> GetDistance(double lat1, double long1, double lat2, double long2)
+        {
+            var coordinate1 = new GeoCoordinate(lat1, long1);
+            var coordinate2 = new GeoCoordinate(lat2, long2);
+
+            return Ok(new GenericResponse { Message = coordinate1.GetDistanceTo(coordinate2).ToString() });
+        }
+
         [HttpGet(ApiRoute.Store.GetAllStoresByStoreOwnerId)]
         public async Task<IActionResult> GetAllStoresByStoreOwnerId([FromQuery] Guid storeOwnerId, [FromQuery] PaginationQuery paginationQuery)
         {
@@ -159,11 +173,20 @@ namespace OK_OnBoarding.Controllers.V1
         }
 
         [HttpGet(ApiRoute.Store.GetAllStores)]
-        public async Task<IActionResult> GetAllStores([FromQuery] PaginationQuery paginationQuery)
+        public async Task<IActionResult> GetAllStores([FromQuery] Double latitude, [FromQuery] Double longitude, [FromQuery] PaginationQuery paginationQuery)
         {
+            if (latitude < -90.0 || latitude > 90.0)
+                return BadRequest("Invalid Latitude.");
+            if (longitude < -180.0 || longitude > 180.0)
+                return BadRequest("Invalid Longitude.");
+
+            var searchCoordinate = new GeoCoordinate(latitude, longitude);
+            if (searchCoordinate.IsUnknown)
+                return BadRequest("Unknown Location.");
+
             var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
 
-            var allStores = await _storeService.GetAllStoresAsync(pagination);
+            var allStores = await _storeService.GetAllStoresAsync(searchCoordinate, pagination);
 
             if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
                 return Ok(new PagedResponse<Store>(allStores));

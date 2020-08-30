@@ -15,6 +15,7 @@ namespace OK_OnBoarding.Services
         Task<GenericResponse> AddCartItemAsync(AddCartItemRequest request);
         Task<GenericResponse> RemoveCartItemAsync(int cartItemId);
         Task<GenericResponse> GetCartAsync(int cartId);
+        Task<GenericResponse> ClearCartAsync(int cartId);
         Task<GenericResponse> CheckoutAsync(CheckoutRequest request);
         Task<GenericResponse> GetOrderAsync(string sessionId);
         Task<List<Order>> GetAllCustomerOrdersAsync(Guid CustomerId, PaginationFilter pagination = null);

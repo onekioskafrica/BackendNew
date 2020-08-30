@@ -25,5 +25,7 @@ namespace OK_OnBoarding.Domains
 
         [Column(TypeName = "decimal(18, 2)")]
         public decimal TotalOnekioskPriceDiscount { get; set; }
+
+        public List<StoreDiscountDetail> DiscountsPerStoreList { get; set; }
     }
 }

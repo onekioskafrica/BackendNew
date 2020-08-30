@@ -71,6 +71,7 @@ namespace OK_OnBoarding.Contracts
             public const string GetOrder = Base + "/shoppingcart/getorderbysession";
             public const string GetAllOrders = Base + "/shoppingcart/getallcustomerorders";
             public const string GetAllCarts = Base + "/shoppingcart/getallcustomercarts";
+            public const string ClearCart = Base + "/shoppingcart/clearcart";
         }
 
         public static class Customer

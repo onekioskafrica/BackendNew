@@ -8,31 +8,27 @@ namespace OK_OnBoarding.Contracts.V1.Responses
 {
     public class UserDataResponse
     {
-        [JsonPropertyName("id")]
         public Guid Id { get; set; }
-
-        [JsonPropertyName("email")]
         public string Email { get; set; }
-
-        [JsonPropertyName("phone_number")]
         public string PhoneNumber { get; set; }
-
-        [JsonPropertyName("first_name")]
         public string FirstName { get; set; }
-
-        [JsonPropertyName("middle_name")]
         public string MiddleName { get; set; }
-
-        [JsonPropertyName("last_name")]
         public string LastName { get; set; }
-
-        [JsonPropertyName("is_google_registered")]
+        public string Gender { get; set; }
+        public string ProfilePicUrl { get; set; }
+        public DateTime? DateOfBirth { get; set; }
+        public string Line1 { get; set; }
+        public string Line2 { get; set; }
+        public string City { get; set; }
+        public string State { get; set; }
+        public string Country { get; set; }
+        public string Bank { get; set; }
+        public string AccountNumber { get; set; }
+        public string AccountName { get; set; }
         public bool IsGoogleRegistered { get; set; }
-
-        [JsonPropertyName("is_facebook_registered")]
         public bool IsFacebookRegistered { get; set; }
-
-        [JsonPropertyName("is_update_complete")]
         public bool IsUpdateComplete { get; set; }
+        public DateTime? LastLoginDate { get; set; }
+        public DateTime? DateRegistered { get; set; }
     }
 }

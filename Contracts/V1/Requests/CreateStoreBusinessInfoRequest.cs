@@ -30,6 +30,12 @@ namespace OK_OnBoarding.Contracts.V1.Requests
         [Required]
         public string Country { get; set; }
 
+        [Required]
+        public Double Latitude { get; set; }
+
+        [Required]
+        public Double Longitude { get; set; }
+
         public string TaxIdentificationNumber { get; set; }
 
         [Required]
