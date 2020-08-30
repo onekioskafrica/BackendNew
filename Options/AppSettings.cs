@@ -19,5 +19,10 @@ namespace OK_OnBoarding.Helpers
         public decimal ExtraShippingForBuyingFromMultipleStores { get; set; }
 
         public int LengthOfCouponCode { get; set; }
+        public double SearchRadiusInMetres { get; set; }
+        public bool LoadLocationAwareStores { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal ShippingPerKmInKobo { get; set; }
     }
 }

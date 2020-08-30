@@ -68,6 +68,16 @@ namespace OK_OnBoarding.Controllers.V1
             return Ok(genericResponse);
         }
 
+        [HttpDelete(ApiRoute.Cart.ClearCart)]
+        public async Task<IActionResult> ClearCart([FromQuery][Required] int cartId)
+        {
+            var genericResponse = await _cartService.ClearCartAsync(cartId);
+
+            if (!genericResponse.Status)
+                return BadRequest(genericResponse);
+            return Ok(genericResponse);
+        }
+
         [HttpGet(ApiRoute.Cart.Checkout)]
         public async Task<IActionResult> Checkout([FromQuery] CheckoutRequest request)
         {

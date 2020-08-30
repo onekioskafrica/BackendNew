@@ -17,10 +17,10 @@ namespace OK_OnBoarding.Contracts.V1.Requests
         public string CouponCode { get; set; }
 
         [Required]
-        public decimal Longitude { get; set; }
+        public double Longitude { get; set; }
 
         [Required]
-        public decimal Latitude { get; set; }
+        public double Latitude { get; set; }
 
         [Required]
         public string Line1 { get; set; }

@@ -9,6 +9,7 @@ namespace OK_OnBoarding.Entities
     public class Payment
     {
         public Guid Id { get; set; }
+        public int CartItemId { get; set; }
 
         public string SessionId { get; set; }
 
@@ -16,12 +17,16 @@ namespace OK_OnBoarding.Entities
         public Guid StoreId { get; set; }
 
         [Column(TypeName = "decimal(18, 2)")]
-        public decimal GrandTotal { get; set; }
+        public decimal Total { get; set; }
 
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal StoreDiscountOnShipping { get; set; }
+
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal StoreDiscountOnPrice { get; set; }
         public string PaymentReference { get; set; }
         public string PaymentStatus { get; set; }
         public DateTime PaymentDate { get; set; }
-
         public bool IsSettled { get; set; }
 
         [Column(TypeName = "decimal(18, 2)")]

@@ -1,5 +1,6 @@
 ﻿using Amazon.S3.Model.Internal.MarshallTransformations;
 using AutoMapper;
+using GeoCoordinatePortable;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using OK_OnBoarding.Contracts.V1.Requests;
@@ -264,19 +265,45 @@ namespace OK_OnBoarding.Services
             return allStores;
         }
 
-        public async Task<List<Store>> GetAllStoresAsync(PaginationFilter paginationFilter = null)
+        public async Task<List<Store>> GetAllStoresAsync(GeoCoordinate searchCoordinate, PaginationFilter paginationFilter = null)
         {
-            List<Store> allStores = null;
-            if (paginationFilter == null)
+            if (_appSettings.LoadLocationAwareStores)
             {
-                allStores = await _dataContext.Stores.Include(s => s.StoresBankAccount).Include(s => s.StoresBusinessInformation).ToListAsync<Store>();
+                List<Store> allStores = await _dataContext.Stores.Include(s => s.StoresBankAccount).Include(s => s.StoresBusinessInformation).ToListAsync<Store>();
+                List<Store> closeStores = null;
+                foreach (var store in allStores)
+                {
+                    var storeLatitude = store.StoresBusinessInformation.Latitude;
+                    var storeLongitude = store.StoresBusinessInformation.Longitude;
+
+                    var storeCoordinate = new GeoCoordinate(storeLatitude, storeLongitude);
+                    if (storeCoordinate.GetDistanceTo(searchCoordinate) <= _appSettings.SearchRadiusInMetres)
+                        closeStores.Add(store);
+                }
+                if (paginationFilter == null)
+                {
+                    return closeStores;
+                }
+                else
+                {
+                    var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                    return closeStores.Skip(skip).Take(paginationFilter.PageSize).ToList();
+                }
             }
             else
             {
-                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
-                allStores = await _dataContext.Stores.Skip(skip).Take(paginationFilter.PageSize).Include(s => s.StoresBankAccount).Include(s => s.StoresBusinessInformation).ToListAsync<Store>();
+                List<Store> allStores = null;
+                if (paginationFilter == null)
+                {
+                    allStores = await _dataContext.Stores.Include(s => s.StoresBankAccount).Include(s => s.StoresBusinessInformation).ToListAsync<Store>();
+                }
+                else
+                {
+                    var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                    allStores = await _dataContext.Stores.Skip(skip).Take(paginationFilter.PageSize).Include(s => s.StoresBankAccount).Include(s => s.StoresBusinessInformation).ToListAsync<Store>();
+                }
+                return allStores;
             }
-            return allStores;
         }
 
         public async Task<List<StoreReview>> GetStoreReviewsAsync(Guid storeId, PaginationFilter paginationFilter = null)
@@ -284,12 +311,19 @@ namespace OK_OnBoarding.Services
             List<StoreReview> allStoreReviews = null;
             if (paginationFilter == null)
             {
-                allStoreReviews = await _dataContext.StoreReviews.Where(s => s.StoreId == storeId && s.IsPublished).ToListAsync<StoreReview>();
+                allStoreReviews = await _dataContext.StoreReviews.Include(s => s.Customer).Where(s => s.StoreId == storeId && s.IsPublished).ToListAsync<StoreReview>();
             }
             else
             {
                 var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
-                allStoreReviews = await _dataContext.StoreReviews.Where(s => s.StoreId == storeId && s.IsPublished).Skip(skip).Take(paginationFilter.PageSize).ToListAsync<StoreReview>();
+                allStoreReviews = await _dataContext.StoreReviews.Include(s => s.Customer).Where(s => s.StoreId == storeId && s.IsPublished).Skip(skip).Take(paginationFilter.PageSize).ToListAsync<StoreReview>();
+            }
+            foreach(var review in allStoreReviews)
+            {
+                review.Customer.Carts = null;
+                review.Customer.PasswordHash = null;
+                review.Customer.PasswordSalt = null;
+                review.Customer.Carts = null;
             }
             return allStoreReviews;
         }

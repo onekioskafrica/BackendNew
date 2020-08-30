@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using GeoCoordinatePortable;
 using Microsoft.EntityFrameworkCore;
 using OK_OnBoarding.Contracts.V1.Requests;
 using OK_OnBoarding.Contracts.V1.Responses;
@@ -127,22 +128,230 @@ namespace OK_OnBoarding.Services
             var cartExist = await _dataContext.Carts.Include(c => c.CartItems).FirstOrDefaultAsync(c => c.Id == request.CartId && c.SessionId == request.SessionId);
             if (cartExist == null)
                 return new GenericResponse { Status = false, Message = "Invalid Cart" };
-            if (cartExist.Status != CartStatusEnum.NEW.ToString())
-                return new GenericResponse { Status = false, Message = "This Cart has already been checked out." };
+            if (cartExist.Status == CartStatusEnum.ABANDONED.ToString() || cartExist.Status == CartStatusEnum.COMPLETE.ToString() || cartExist.Status == CartStatusEnum.PAID.ToString())
+                return new GenericResponse { Status = false, Message = "Cannot checkout this cart." };
+            
             var cartItemsInsideCart = cartExist.CartItems.Where(c => c.IsActive).ToList();
             if (cartItemsInsideCart.Count == 0)
                 return new GenericResponse { Status = false, Message = "Cart is empty" };
 
             var totalPrice = cartItemsInsideCart.Sum(c => c.Total);
 
-            cartExist.Status = CartStatusEnum.CHECKOUT.ToString();
-            cartExist.UpdatedAt = DateTime.Now;
-
             var locationForDelivery = new Location { Latitude = request.Latitude, Longitude = request.Longitude };
+            CheckoutResponse checkoutResponse = null;
             //Tax ???
             //Shipping
             var undiscountedShipping = await CalculateUndiscountedShipping(cartItemsInsideCart, locationForDelivery);
             var totalDiscount = await ComputeTotalDiscount(cartItemsInsideCart, undiscountedShipping, request.CouponCode);
+            if (cartExist.Status == CartStatusEnum.CHECKOUT.ToString())
+            {
+                var modifyOrderResponse = await ModifyOrder(request, totalPrice, undiscountedShipping, totalDiscount, cartItemsInsideCart, totalDiscount.DiscountsPerStoreList);
+                if (!modifyOrderResponse.Status)
+                    return modifyOrderResponse;
+                checkoutResponse = (CheckoutResponse) modifyOrderResponse.Data;
+            }
+            else
+            {
+                var createOrderResponse = await CreateOrder(cartExist, totalPrice, undiscountedShipping, request, totalDiscount, cartItemsInsideCart, totalDiscount.DiscountsPerStoreList);
+                if (!createOrderResponse.Status)
+                    return createOrderResponse;
+                checkoutResponse = (CheckoutResponse)createOrderResponse.Data;
+            }
+
+            checkoutResponse.CartItems = cartItemsInsideCart;
+
+            return new GenericResponse { Status = true, Message = "Checkout Successful", Data = checkoutResponse };
+        }
+
+        public async Task<GenericResponse> CreateCartAsync(Guid CustomerId, string SessionId)
+        {
+            var customerExist = await _dataContext.Customers.FirstOrDefaultAsync(c => c.CustomerId == CustomerId);
+            if (customerExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Customer" };
+            if (!customerExist.IsVerified)
+                return new GenericResponse { Status = false, Message = "Customer is not verified." };
+
+            var cartExists = await _dataContext.Carts.FirstOrDefaultAsync(c => c.CustomerId == CustomerId && c.SessionId == SessionId);
+            if (cartExists != null)
+                return new GenericResponse { Status = false, Message = "Cart already exists." };
+
+            var newCart = new Cart {
+                CustomerId = CustomerId,
+                SessionId = SessionId,
+                Token = SessionId,
+                Status = CartStatusEnum.NEW.ToString(),
+                CreatedAt = DateTime.Now
+            };
+            await _dataContext.Carts.AddAsync(newCart);
+            var created = 0;
+            try
+            {
+                created = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (created <= 0)
+                return new GenericResponse { Status = false, Message = "Couldn't create cart." };
+
+            newCart.Customer = null;
+
+            return new GenericResponse { Status = true, Message = "Cart Created", Data = newCart };
+        }
+
+        public async Task<GenericResponse> GetCartAsync(int cartId)
+        {
+            var cartExist = await _dataContext.Carts.FirstOrDefaultAsync(c => c.Id == cartId);
+            if (cartExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Cart Id" };
+            var cartItems = await _dataContext.CartItems.Include(c => c.Product).Include(c => c.Store).Where(c => c.CartId == cartId && c.IsActive).ToListAsync();
+            cartExist.CartItems = cartItems;
+            foreach(var cartItem in cartItems)
+            {
+                cartItem.Product.Store = null;
+                cartItem.Store.CartItems = null;
+                cartItem.Store.StoreReviews = null;
+                cartItem.Store.Products = null;
+            }
+            return new GenericResponse { Status = true, Message = "Success", Data = cartExist };
+        }
+
+        public async Task<GenericResponse> ClearCartAsync(int cartId)
+        {
+            var cartExist = await _dataContext.Carts.FirstOrDefaultAsync(c => c.Id == cartId);
+            if (cartExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Cart Id" };
+            if(cartExist.Status == CartStatusEnum.NEW.ToString())
+            {
+                _dataContext.Carts.Remove(cartExist);
+                var cartItems = await _dataContext.CartItems.Where(c => c.CartId == cartId).ToListAsync<CartItem>();
+                _dataContext.CartItems.RemoveRange(cartItems);
+
+                var deleted = 0;
+                try
+                {
+                    deleted = await _dataContext.SaveChangesAsync();
+                }
+                catch (Exception)
+                {
+                    return new GenericResponse { Status = false, Message = "Error Occurred" };
+                }
+                if (deleted <= 0)
+                    return new GenericResponse { Status = false, Message = "Couldn't Clear Cart" };
+
+                return new GenericResponse { Status = true, Message = "Cart Cleared." };
+            }
+            else if(cartExist.Status == CartStatusEnum.CHECKOUT.ToString())
+            {
+                var cartItems = await _dataContext.CartItems.Where(c => c.CartId == cartId).ToListAsync<CartItem>();
+                _dataContext.CartItems.RemoveRange(cartItems);
+
+                var orderAssociatedWithCheckout = await _dataContext.Orders.FirstOrDefaultAsync(o => o.SessionId == cartExist.SessionId);
+                if(orderAssociatedWithCheckout != null)
+                {
+                    _dataContext.Orders.Remove(orderAssociatedWithCheckout);
+                }
+                var paymentAssociatedWithOrder = await _dataContext.Payments.Where(p => p.SessionId == cartExist.SessionId).ToListAsync<Payment>();
+                _dataContext.Payments.RemoveRange(paymentAssociatedWithOrder);
+
+                var deleted = 0;
+                try
+                {
+                    deleted = await _dataContext.SaveChangesAsync();
+                }
+                catch (Exception)
+                {
+                    return new GenericResponse { Status = false, Message = "Error Occurred" };
+                }
+                if (deleted <= 0)
+                    return new GenericResponse { Status = false, Message = "Couldn't Clear Cart" };
+
+                return new GenericResponse { Status = true, Message = "Cart Cleared." };
+            }
+            else
+            {
+                return new GenericResponse { Status = false, Message = "Can't clear this cart." };
+            }
+          
+        }
+
+        public async Task<GenericResponse> RemoveCartItemAsync(int cartItemId)
+        {
+            var cartItemExist = await _dataContext.CartItems.FirstOrDefaultAsync(c => c.Id == cartItemId);
+            if (cartItemExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Cart Item Id" };
+
+            cartItemExist.IsActive = false;
+            _dataContext.Entry(cartItemExist).State = EntityState.Modified;
+            var updated = 0;
+            try
+            {
+                updated = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (updated <= 0)
+                return new GenericResponse { Status = false, Message = "Unable to remove item." };
+
+            return new GenericResponse { Status = true, Message = "Item removed successfully." };
+        }
+
+        public async Task<GenericResponse> GetOrderAsync(string sessionId)
+        {
+            Order orderExist = null;
+            try
+            {
+                orderExist = await _dataContext.Orders.FirstOrDefaultAsync(o => o.SessionId == sessionId);
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            
+            if (orderExist == null)
+                return new GenericResponse { Status = false, Message = "Invalid Order Id" };
+
+            return new GenericResponse { Status = true, Message = "Success", Data = orderExist };
+        }
+
+        public async Task<List<Order>> GetAllCustomerOrdersAsync(Guid CustomerId, PaginationFilter paginationFilter = null)
+        {
+            List<Order> allCustomerOrders = null;
+            if(paginationFilter == null)
+            {
+                allCustomerOrders = await _dataContext.Orders.Where(o => o.CustomerId == CustomerId).ToListAsync<Order>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allCustomerOrders = await _dataContext.Orders.Where(o => o.CustomerId == CustomerId).Skip(skip).Take(paginationFilter.PageSize).ToListAsync<Order>();
+            }
+            return allCustomerOrders;
+        }
+
+        public async Task<List<Cart>> GetAllCustomerCartsAsync(Guid CustomerId, PaginationFilter paginationFilter = null)
+        {
+            List<Cart> allCustomerCarts = null;
+            if (paginationFilter == null)
+            {
+                allCustomerCarts = await _dataContext.Carts.Where(c => c.CustomerId == CustomerId).ToListAsync<Cart>();
+            }
+            else
+            {
+                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+                allCustomerCarts = await _dataContext.Carts.Where(c => c.CustomerId == CustomerId).Skip(skip).Take(paginationFilter.PageSize).ToListAsync<Cart>();
+            }
+            return allCustomerCarts;
+        }
+
+
+        #region HELPERS
+
+        public async Task<GenericResponse> CreateOrder(Cart cartExist, decimal totalPrice, decimal undiscountedShipping, CheckoutRequest request, TotalDiscount totalDiscount, List<CartItem> cartItemsInsideCart, List<StoreDiscountDetail> storeDiscountDetails)
+        {
             var order = new Order
             {
                 CustomerId = cartExist.CustomerId,
@@ -150,6 +359,7 @@ namespace OK_OnBoarding.Services
                 Token = cartExist.Token,
                 Status = OrderStatusEnum.NEW.ToString(),
                 SubTotal = totalPrice,
+                Shipping = undiscountedShipping,
                 Total = undiscountedShipping + totalPrice,
                 Promo = request.CouponCode,
                 StoreOwnerShippingDiscount = totalDiscount.TotalStoreOwnerShippingDiscount,
@@ -170,12 +380,17 @@ namespace OK_OnBoarding.Services
             await _dataContext.Orders.AddAsync(order);
 
             var payments = new List<Payment>();
-            foreach(var cartItem in cartItemsInsideCart)
+            foreach (var cartItem in cartItemsInsideCart)
             {
-                var payment = new Payment() {
+                var storeDiscountOnItem = storeDiscountDetails.FirstOrDefault(s => s.CartItemId == cartItem.Id);
+                var payment = new Payment()
+                {
+                    CartItemId = cartItem.Id,
                     SessionId = order.SessionId,
                     StoreId = cartItem.StoreId,
-                    GrandTotal = order.GrandTotal,
+                    Total = cartItem.Total,
+                    StoreDiscountOnPrice = storeDiscountOnItem.DiscountOnPrice,
+                    StoreDiscountOnShipping = storeDiscountOnItem.DiscountOnShipping,
                     IsSettled = false,
                     AmountPaidToOneKiosk = 0.00M,
                     AmountPaidToStore = 0.00M
@@ -183,6 +398,12 @@ namespace OK_OnBoarding.Services
                 payments.Add(payment);
             }
             await _dataContext.Payments.AddRangeAsync(payments);
+
+            cartExist.Status = CartStatusEnum.CHECKOUT.ToString();
+            cartExist.UpdatedAt = DateTime.Now;
+
+            _dataContext.Entry(cartExist).State = EntityState.Modified;
+
             var created = 0;
             try
             {
@@ -196,14 +417,76 @@ namespace OK_OnBoarding.Services
                 return new GenericResponse { Status = false, Message = "Couldn't Checkout." };
 
             var checkoutResponse = _mapper.Map<CheckoutResponse>(order);
-            checkoutResponse.CartItems = cartItemsInsideCart;
+            return new GenericResponse { Status = true, Message = "Order Created", Data = checkoutResponse };
+        }
 
-            return new GenericResponse { Status = true, Message = "Checkout Successful", Data = checkoutResponse };
+        public async Task<GenericResponse> ModifyOrder(CheckoutRequest request, decimal totalPrice, decimal undiscountedShipping, TotalDiscount totalDiscount, List<CartItem> cartItemsInsideCart, List<StoreDiscountDetail> storeDiscountDetails)
+        {
+            var orderExist = await _dataContext.Orders.FirstOrDefaultAsync(o => o.SessionId == request.SessionId);
+            orderExist.SubTotal = totalPrice;
+            orderExist.Shipping = undiscountedShipping;
+            orderExist.Total = undiscountedShipping + totalPrice;
+            orderExist.Promo = request.CouponCode;
+            orderExist.StoreOwnerShippingDiscount = totalDiscount.TotalStoreOwnerShippingDiscount;
+            orderExist.StoreOwnerPriceDiscount = totalDiscount.TotalStoreOwnerPriceDiscount;
+            orderExist.OnekioskPriceDiscount = totalDiscount.TotalOnekioskPriceDiscount;
+            orderExist.OnekioskShippingDiscount = totalDiscount.TotalOnekioskShippingDiscount;
+            orderExist.ShippingDiscount = totalDiscount.TotalShippingDiscount;
+            orderExist.PriceDiscount = totalDiscount.TotalPriceDiscount;
+            orderExist.Discount = totalDiscount.TotalPriceDiscount + totalDiscount.TotalShippingDiscount;
+            orderExist.GrandTotal = totalPrice - (totalDiscount.TotalShippingDiscount + totalDiscount.TotalPriceDiscount);
+            orderExist.Line1 = request.Line1;
+            orderExist.City = request.City;
+            orderExist.State = request.State;
+            orderExist.Country = request.Country;
+
+            _dataContext.Entry(orderExist).State = EntityState.Modified;
+
+            var paymentExist = await _dataContext.Payments.Where(p => p.SessionId == request.SessionId).ToListAsync<Payment>();
+            _dataContext.Payments.RemoveRange(paymentExist);
+
+
+            var payments = new List<Payment>();
+            foreach (var cartItem in cartItemsInsideCart)
+            {
+                var storeDiscountOnItem = storeDiscountDetails.FirstOrDefault(s => s.CartItemId == cartItem.Id);
+                var payment = new Payment()
+                {
+                    CartItemId = cartItem.Id,
+                    SessionId = orderExist.SessionId,
+                    StoreId = cartItem.StoreId,
+                    Total = cartItem.Total,
+                    StoreDiscountOnPrice = storeDiscountOnItem.DiscountOnPrice,
+                    StoreDiscountOnShipping = storeDiscountOnItem.DiscountOnShipping,
+                    IsSettled = false,
+                    AmountPaidToOneKiosk = 0.00M,
+                    AmountPaidToStore = 0.00M
+                };
+                payments.Add(payment);
+            }
+            await _dataContext.Payments.AddRangeAsync(payments);
+
+            var modified = 0;
+            try
+            {
+                modified = await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return new GenericResponse { Status = false, Message = "Error Occurred." };
+            }
+            if (modified <= 0)
+                return new GenericResponse { Status = false, Message = "Couldn't Checkout." };
+
+            var checkoutResponse = _mapper.Map<CheckoutResponse>(orderExist);
+
+            return new GenericResponse { Status = true, Message = "Modified", Data = checkoutResponse };
         }
 
         public async Task<TotalDiscount> ComputeTotalDiscount(List<CartItem> cartItems, decimal undiscountedShipping, string couponCode)
         {
-            
+            var StoreDiscounts = new List<StoreDiscountDetail>();
+
             var totalStoreOwnerConfiguredShippingDiscount = 0.00M;
             var totalStoreOwnerConfiguredPriceDiscount = 0.00M;
 
@@ -216,6 +499,15 @@ namespace OK_OnBoarding.Services
                 totalStoreOwnerConfiguredShippingDiscount = totalStoreOwnerConfiguredShippingDiscount + storeOwnerDiscountResponse.DiscountOnShipping;
                 totalStoreOwnerConfiguredPriceDiscount = totalStoreOwnerConfiguredPriceDiscount + storeOwnerDiscountResponse.DiscountOnPrice;
 
+                var storeDiscount = new StoreDiscountDetail
+                {
+                    CartItemId = cartItem.Id,
+                    StoreId = cartItem.StoreId,
+                    DiscountOnPrice = totalStoreOwnerConfiguredPriceDiscount,
+                    DiscountOnShipping = totalStoreOwnerConfiguredShippingDiscount
+                };
+                StoreDiscounts.Add(storeDiscount);
+
                 var adminConfiguredDiscountResponse = await GetDiscountConfiguredByAdmin(cartItem, undiscountedShipping);
                 totalAdminConfiguredShippingDiscount = totalAdminConfiguredShippingDiscount + adminConfiguredDiscountResponse.DiscountOnShipping;
                 totalAdminConfiguredPriceDiscount = totalAdminConfiguredPriceDiscount + adminConfiguredDiscountResponse.DiscountOnPrice;
@@ -224,26 +516,42 @@ namespace OK_OnBoarding.Services
             var totalShippingDiscount = totalStoreOwnerConfiguredShippingDiscount + totalAdminConfiguredShippingDiscount;
             var totalPriceDiscount = totalStoreOwnerConfiguredPriceDiscount + totalAdminConfiguredPriceDiscount;
 
-            return new TotalDiscount { 
-                TotalShippingDiscount = totalShippingDiscount, 
-                TotalPriceDiscount = totalPriceDiscount, 
+            return new TotalDiscount
+            {
+                TotalShippingDiscount = totalShippingDiscount,
+                TotalPriceDiscount = totalPriceDiscount,
                 TotalOnekioskShippingDiscount = totalAdminConfiguredShippingDiscount,
                 TotalOnekioskPriceDiscount = totalAdminConfiguredPriceDiscount,
                 TotalStoreOwnerShippingDiscount = totalStoreOwnerConfiguredShippingDiscount,
-                TotalStoreOwnerPriceDiscount = totalStoreOwnerConfiguredPriceDiscount 
+                TotalStoreOwnerPriceDiscount = totalStoreOwnerConfiguredPriceDiscount,
+                DiscountsPerStoreList = StoreDiscounts
             };
         }
 
         public async Task<decimal> CalculateUndiscountedShipping(List<CartItem> cartItems, Location location)
         {
             var theIDsOfStoresPurchasedFrom = cartItems.Select(c => c.StoreId).Distinct().ToList<Guid>();
-            var pickupStore = theIDsOfStoresPurchasedFrom.ElementAt(0);
+            var pickupStoreID = theIDsOfStoresPurchasedFrom.ElementAt(0);
             /*
              * Get the latitude and longitude of the pickupStore.
              * Calculate the distance between the pickupStore and parameters - latitude and longitude.
-             * Then use Onekiosk cost per distance formula to get the shipping.
+             * 
              */
-            var shippingBasedOnLocation = 0.00M;
+            var pickupStore = await _dataContext.StoresBusinessInformation.FirstOrDefaultAsync(s => s.StoreId == pickupStoreID);
+            var shippingPerKMInKobo = _appSettings.ShippingPerKmInKobo;
+            var distanceInKM = 0.0;
+            if (pickupStore != null)
+            {
+                var latitude = pickupStore.Latitude;
+                var longitude = pickupStore.Longitude;
+
+                var purchaseLocation = new GeoCoordinate(location.Latitude, location.Longitude);
+                var pickupLocation = new GeoCoordinate(latitude, longitude);
+
+                var distanceInMetres = purchaseLocation.GetDistanceTo(pickupLocation);
+                distanceInKM = distanceInMetres / 1000;
+            }
+            var shippingBasedOnLocation = (Convert.ToDecimal(distanceInKM) * shippingPerKMInKobo)/100; //in Naira.
             var extraShippingForBuyingFromMultipleStores = _appSettings.ExtraShippingForBuyingFromMultipleStores;
 
             var numberOfStoresPurchasedFrom = theIDsOfStoresPurchasedFrom.Count;
@@ -261,7 +569,7 @@ namespace OK_OnBoarding.Services
             var todayDate = DateTime.Now;
             var couponExist = await _dataContext.Coupons.FirstOrDefaultAsync(c => c.Code == couponCode && c.IsActive && todayDate >= c.StartDate && todayDate <= c.EndDate);
 
-            var priceOfProduct = cartItem.Price;
+            var priceOfProduct = cartItem.Total;
 
             //Invalid Coupon
             if (couponExist == null)
@@ -326,7 +634,7 @@ namespace OK_OnBoarding.Services
                     }
                 }
             }
-            
+
             return new DiscountResponse { DiscountOnPrice = discountOnPrice, DiscountOnShipping = discountOnShipping };
         }
 
@@ -348,7 +656,7 @@ namespace OK_OnBoarding.Services
             if (couponsExist.Count == 0)
                 return new DiscountResponse { DiscountOnShipping = discountOnShipping, DiscountOnPrice = discountOnPrice };
 
-            var priceOfProduct = cartItem.Price;
+            var priceOfProduct = cartItem.Total;
 
             var product = await _dataContext.Products.Include(p => p.ProductPricing).FirstOrDefaultAsync(p => p.Id == cartItem.ProductId);
 
@@ -391,7 +699,7 @@ namespace OK_OnBoarding.Services
                 }
                 if (coupon.IsForProduct)
                 {
-                    if(product.Id == coupon.ProductId)
+                    if (product.Id == coupon.ProductId)
                     {
                         if (coupon.IsForShipping)
                         {
@@ -476,123 +784,6 @@ namespace OK_OnBoarding.Services
             return updated;
         }
 
-        public async Task<GenericResponse> CreateCartAsync(Guid CustomerId, string SessionId)
-        {
-            var customerExist = await _dataContext.Customers.FirstOrDefaultAsync(c => c.CustomerId == CustomerId);
-            if (customerExist == null)
-                return new GenericResponse { Status = false, Message = "Invalid Customer" };
-            if (!customerExist.IsVerified)
-                return new GenericResponse { Status = false, Message = "Customer is not verified." };
-
-            var cartExists = await _dataContext.Carts.FirstOrDefaultAsync(c => c.CustomerId == CustomerId && c.SessionId == SessionId);
-            if (cartExists != null)
-                return new GenericResponse { Status = false, Message = "Cart already exists." };
-
-            var newCart = new Cart {
-                CustomerId = CustomerId,
-                SessionId = SessionId,
-                Token = SessionId,
-                Status = CartStatusEnum.NEW.ToString(),
-                CreatedAt = DateTime.Now
-            };
-            await _dataContext.Carts.AddAsync(newCart);
-            var created = 0;
-            try
-            {
-                created = await _dataContext.SaveChangesAsync();
-            }
-            catch (Exception)
-            {
-                return new GenericResponse { Status = false, Message = "Error Occurred." };
-            }
-            if (created <= 0)
-                return new GenericResponse { Status = false, Message = "Couldn't create cart." };
-
-            newCart.Customer = null;
-
-            return new GenericResponse { Status = true, Message = "Cart Created", Data = newCart };
-        }
-
-        public async Task<GenericResponse> GetCartAsync(int cartId)
-        {
-            var cartExist = await _dataContext.Carts.FirstOrDefaultAsync(c => c.Id == cartId);
-            if (cartExist == null)
-                return new GenericResponse { Status = false, Message = "Invalid Cart Id" };
-            var cartItems = await _dataContext.CartItems.Where(c => c.CartId == cartId && c.IsActive).ToListAsync();
-            cartExist.CartItems = cartItems;
-
-            return new GenericResponse { Status = true, Message = "Success", Data = cartExist };
-        }
-
-        public async Task<GenericResponse> RemoveCartItemAsync(int cartItemId)
-        {
-            var cartItemExist = await _dataContext.CartItems.FirstOrDefaultAsync(c => c.Id == cartItemId);
-            if (cartItemExist == null)
-                return new GenericResponse { Status = false, Message = "Invalid Cart Item Id" };
-
-            cartItemExist.IsActive = false;
-            _dataContext.Entry(cartItemExist).State = EntityState.Modified;
-            var updated = 0;
-            try
-            {
-                updated = await _dataContext.SaveChangesAsync();
-            }
-            catch (Exception)
-            {
-                return new GenericResponse { Status = false, Message = "Error Occurred." };
-            }
-            if (updated <= 0)
-                return new GenericResponse { Status = false, Message = "Unable to remove item." };
-
-            return new GenericResponse { Status = true, Message = "Item removed successfully." };
-        }
-
-        public async Task<GenericResponse> GetOrderAsync(string sessionId)
-        {
-            Order orderExist = null;
-            try
-            {
-                orderExist = await _dataContext.Orders.FirstOrDefaultAsync(o => o.SessionId == sessionId);
-            }
-            catch (Exception)
-            {
-                return new GenericResponse { Status = false, Message = "Error Occurred." };
-            }
-            
-            if (orderExist == null)
-                return new GenericResponse { Status = false, Message = "Invalid Order Id" };
-
-            return new GenericResponse { Status = true, Message = "Success", Data = orderExist };
-        }
-
-        public async Task<List<Order>> GetAllCustomerOrdersAsync(Guid CustomerId, PaginationFilter paginationFilter = null)
-        {
-            List<Order> allCustomerOrders = null;
-            if(paginationFilter == null)
-            {
-                allCustomerOrders = await _dataContext.Orders.Where(o => o.CustomerId == CustomerId).ToListAsync<Order>();
-            }
-            else
-            {
-                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
-                allCustomerOrders = await _dataContext.Orders.Where(o => o.CustomerId == CustomerId).Skip(skip).Take(paginationFilter.PageSize).ToListAsync<Order>();
-            }
-            return allCustomerOrders;
-        }
-
-        public async Task<List<Cart>> GetAllCustomerCartsAsync(Guid CustomerId, PaginationFilter paginationFilter = null)
-        {
-            List<Cart> allCustomerCarts = null;
-            if (paginationFilter == null)
-            {
-                allCustomerCarts = await _dataContext.Carts.Where(c => c.CustomerId == CustomerId).ToListAsync<Cart>();
-            }
-            else
-            {
-                var skip = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
-                allCustomerCarts = await _dataContext.Carts.Where(c => c.CustomerId == CustomerId).Skip(skip).Take(paginationFilter.PageSize).ToListAsync<Cart>();
-            }
-            return allCustomerCarts;
-        }
+        #endregion
     }
 }
